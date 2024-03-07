@@ -4,7 +4,7 @@ import numpy as np
 import sys
 
 sys.path.append(".")
-from env.jssp_env import JsspEnv
+from env.fjssp_env import FjsspEnv
 from Params import configs
 import global_util
 from models.actor_critic import ActorCritic
@@ -32,7 +32,7 @@ def build_ppo(model):
 def main():
     set_random_seed(configs.torch_seed)
 
-    env = JsspEnv(configs.n_j, configs.n_m, configs.low, configs.high, configs.device)
+    env = FjsspEnv(configs.n_j, configs.n_m, configs.low, configs.high, configs.device)
     vali_data = np.load(
         os.path.join(global_util.get_project_root(), "data", "generatedData{}_{}_Seed{}.npy").format(
             configs.n_j, configs.n_m, configs.np_seed_validation

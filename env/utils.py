@@ -1,4 +1,16 @@
 import numpy as np
+import os
+
+def get_project_root() -> str:
+    """
+    Get the absolute path of the project root
+
+    Returns
+    -------
+
+    """
+    return os.path.join(os.path.dirname(__file__), ".")
+
 
 def gen_instance_uniformly(n_j, n_m, low, high):
     # 每个task的处理时长
@@ -39,7 +51,7 @@ def gen_instance_triangle(n_j, n_m, low, high):
     # 机器编号，从0开始, shape (n_j,n_m), 每一行代表一个job的机器处理顺序
     task_machines = np.expand_dims(np.arange(0, n_m), axis=0).repeat(repeats=n_j, axis=0)
     task_machines = _permute_rows(task_machines)
-    return processing_time, task_machines
+    return processing_time['left'], processing_time['peak'], processing_time['right'], task_machines
 
 
 def _permute_rows(x: np.ndarray):
@@ -53,7 +65,22 @@ def _permute_rows(x: np.ndarray):
     return x[ix_i, ix_j]
 
 
+
+def gen_and_save(n_j=6, n_m=6, low=1, high=99, batch_size=100, seed=200):
+    np.random.seed(seed)
+    data = np.array([gen_instance_triangle(n_j=n_j, n_m=n_m, low=low, high=high) for _ in range(batch_size)])
+    print(data.shape)
+    folder = os.path.join(get_project_root(), "data")
+    os.makedirs(folder, exist_ok=True)
+    np.save(os.path.join(folder, "generatedData{}_{}_Seed{}.npy".format(n_j, n_m, seed)), data)
+
+
 if __name__ == '__main__':
-    durations, machines = gen_instance_uniformly(10, 10, 10, 20)
-    print(durations)
-    print(machines)
+    j = 6
+    m = 6
+    l = 1
+    h = 99
+    batch_size = 100
+    seed = 200
+
+    gen_and_save(j, m, l, h, batch_size, seed)

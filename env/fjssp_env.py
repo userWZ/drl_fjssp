@@ -4,9 +4,8 @@ from typing import Tuple
 
 import numpy as np
 from gym.core import ObsType
-
-from utils import gen_instance_uniformly, gen_instance_triangle
-from base_env import BaseEnv
+from env.utils import gen_instance_uniformly, gen_instance_triangle
+from env.base_env import BaseEnv
 
 
 class TFN:
@@ -77,15 +76,18 @@ class FjsspEnv(BaseEnv):
         self.cur_make_span = 0
         self.step_count = 0
         # episode实例读取
+        
         if "data" in kwargs:
-            self.task_durations, self.task_machines = kwargs.get("data")
+            (self.task_durations['left'], self.task_durations['peak'], self.task_durations['right'],
+             self.task_machines) = kwargs.get("data")
             self.n_j, self.n_m = self.task_durations.shape
         else:
             self.n_j = kwargs.get("n_j")
             self.n_m = kwargs.get("n_m")
             # 生成一个新的调度案例（每一个工序的操作时间 和 工序对应的机器编号）
             # task_durations: shape (n_j, n_m, 3)
-            self.task_durations, self.task_machines = gen_instance_triangle(
+            (self.task_durations['left'], self.task_durations['peak'], self.task_durations['right'],
+             self.task_machines) = gen_instance_triangle(
                 self.n_j, self.n_m, self.dur_low, self.dur_high
             )
 

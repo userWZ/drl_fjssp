@@ -89,7 +89,7 @@ class BaseEnv(gym.Env, ABC):
             # 三种操作时间任何一个的插入会导致覆盖已有调度时间片段，则调度顺序都要则放到最后
             self.put_end(task_id, machine_id, start_time, task_duration)
         # 更新机器完成周期
-        self.cur_make_span = np.max(self.task_finish_times)        
+        self.cur_make_span = np.max(self.task_finish_times["right"])
     
     def insert_task(self, machine_occupied_times_true, task_id, job_task_ready_time, task_duration):
         """_summary_
@@ -153,15 +153,15 @@ class BaseEnv(gym.Env, ABC):
         :return:
         """
         
-        # task_id调度顺序中插入task_scheduled_id
-        ind = np.argwhere(np.array(self.scheduled_task_ids) == item[0])
-        self.scheduled_task_ids.insert(ind[0][0], task_id)
-        
         item = {
             "left": self.machine_occupied_times['left'][machine_id][insert_pos],
             "peak": self.machine_occupied_times['peak'][machine_id][insert_pos],
             "right": self.machine_occupied_times['right'][machine_id][insert_pos],
         } 
+        
+        # task_id调度顺序中插入task_scheduled_id
+        ind = np.argwhere(np.array(self.scheduled_task_ids) == item["left"][0])
+        self.scheduled_task_ids.insert(ind[0][0], task_id)
         
         row, col = task_id // self.n_m, task_id % self.n_m
         
