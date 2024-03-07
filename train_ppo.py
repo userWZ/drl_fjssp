@@ -34,7 +34,7 @@ def main():
 
     env = FjsspEnv(configs.n_j, configs.n_m, configs.low, configs.high, configs.device)
     vali_data = np.load(
-        os.path.join(global_util.get_project_root(), "data", "generatedData{}_{}_Seed{}.npy").format(
+        os.path.join(global_util.get_project_root(), "data", "generatedData{}_{}_BatchSize10_Seed{}.npy").format(
             configs.n_j, configs.n_m, configs.np_seed_validation
         )
     )

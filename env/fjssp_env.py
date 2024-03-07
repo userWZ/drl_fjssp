@@ -1,9 +1,12 @@
 import copy
 import random
 from typing import Tuple
-
+import matplotlib.pyplot as plt
+import matplotlib.colors as mc
 import numpy as np
 from gym.core import ObsType
+
+# todo 修复这里的bug
 from env.utils import gen_instance_uniformly, gen_instance_triangle
 from env.base_env import BaseEnv
 
@@ -196,7 +199,33 @@ class FjsspEnv(BaseEnv):
         return obs, total_reward, terminated, False, info
 
     def render(self):
-        pass
+        plt.figure(figsize=(12, 8))
+        colors = list(mc.TABLEAU_COLORS.keys())
+        for machine_idx in range(1, self.n_m+1):
+            y = machine_idx
+            plt.axhline(y, color='black')  # 绘制水平线，表示机器
+        plt.yticks(list(range(self.n_m)))  # 设置y轴刻度
+        for task in self.scheduled_task_ids:
+            job_idx = task // self.n_m
+            task_idx = task % self.n_m
+            start = [self.task_finish_times['left'][job_idx, task_idx], self.task_finish_times['peak'][job_idx, task_idx], self.task_finish_times['right'][job_idx, task_idx]]
+            end = [self.task_finish_times['left'][job_idx, task_idx], self.task_finish_times['peak'][job_idx, task_idx], self.task_finish_times['right'][job_idx, task_idx]]
+            y = self.task_machines[job_idx, task_idx] + 1
+            if start == [0, 0, 0]:
+                plt.scatter(0, y, color=colors[job_idx])  # 绘制起始点
+                plt.text(start[1], y-0.2, str(job_idx)+','+str(task_idx), verticalalignment='center', horizontalalignment='center',
+                        fontsize=6)  # 在起始点添加文本标签
+            else:    
+                triangleX = start
+                triangleY = [y, y-0.2, y]
+                plt.fill(triangleX, triangleY, colors[job_idx])  # 绘制起始时间的三角形
+                plt.text(start[1], y-0.3, str(job_idx)+','+str(task_idx) , verticalalignment='center', horizontalalignment='center',
+                        fontsize=6)  # 在起始时间的三角形上添加文本标签
+            triangleX = end
+            triangleY = [y, y+0.2, y]
+            plt.fill(triangleX, triangleY, colors[job_idx])  # 绘制结束时间的三角形
+            plt.text(end[1], y+0.3, str(job_idx)+','+str(task_idx), verticalalignment='center', horizontalalignment='center', fontsize=6)  # 在结束时间的三角形上添加文本标签
+        plt.show()
 
     def update_low_bounds(self, row, col):
         for key in self.low_bounds.keys():
@@ -248,5 +277,14 @@ class FjsspEnv(BaseEnv):
 
 if __name__ == '__main__':
     env = FjsspEnv(6, 6, 1, 99, 'cpu')
-    env.reset(n_j=6, n_m=6)
-    env.step(1)
+    import os 
+    from utils import get_project_root
+    data = np.load(
+        os.path.join(get_project_root(), "data", "generatedData{}_{}_BatchSize10_Seed{}.npy").format(
+            6, 6, 200
+        )
+    )
+    env.reset(data=data[0])
+    for i in range(36):
+        next_obs, reward, done, _, _ = env.step(i)
+        env.render()

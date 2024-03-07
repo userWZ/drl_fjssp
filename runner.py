@@ -8,7 +8,7 @@ import global_util
 from my_memory import MyMemory
 from jssp_tool.util import logger
 from tensorboardX import SummaryWriter
-
+from visualization.visual import *
 from result_generator import to_dataframe
 
 
@@ -100,6 +100,7 @@ class Runner:
             make_spans.append(self.env.cur_make_span)
             if phase == "test":
                 df_schedule = to_dataframe(self.env.task_durations, self.env.task_machines, self.env.low_bounds)
+                draw_fuzzy_gantt_from_df(df_schedule, self.env.n_m)
                 schedule_list.append(df_schedule)
 
         avg_makespan = np.mean(make_spans)

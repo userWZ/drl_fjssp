@@ -89,7 +89,12 @@ class BaseEnv(gym.Env, ABC):
             # 三种操作时间都可以插入当前已调度机器时间中的空闲片段
             self.put_between(task_id, machine_id, start_time, insert_pos_left, task_duration)
         else:
-            # 三种操作时间任何一个的插入会导致覆盖已有调度时间片段，则调度顺序都要则放到最后
+            # 三种操作时间任何一个的插入会导致覆盖已有调度时间片段，则调度顺序都要则放到最后, 即机器的最后
+            for key in start_time.keys():
+                machine_ready_time = 0
+                if len(self.machine_occupied_times[key][machine_id]) > 0:
+                    machine_ready_time = self.machine_occupied_times[key][machine_id][-1][2]
+                start_time[key] = max(machine_ready_time, job_task_ready_time[key])
             self.put_end(task_id, machine_id, start_time, task_duration)
         # 更新机器完成周期
         self.cur_make_span = np.max(self.task_finish_times["right"])

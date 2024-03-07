@@ -9,7 +9,15 @@ def get_project_root() -> str:
     -------
 
     """
-    return os.path.join(os.path.dirname(__file__), ".")
+    current_dir = os.path.abspath(os.path.dirname(__file__))
+    while not os.path.exists(os.path.join(current_dir, "README.md")):
+        # 如果当前目录下不存在 README.md 文件，则继续向上一级目录查找
+        current_dir = os.path.abspath(os.path.join(current_dir, os.pardir))
+        # 到达文件系统的根目录时停止搜索
+        if current_dir == os.path.abspath(os.sep):
+            raise FileNotFoundError("Project root not found.")
+    return current_dir
+    # return os.path.join(os.path.dirname(__file__), ".")
 
 
 def gen_instance_uniformly(n_j, n_m, low, high):
@@ -40,13 +48,13 @@ def gen_instance_triangle(n_j, n_m, low, high):
 
     for job in range(n_j):
         for machine in range(n_m):
-            left = np.random.randint(low, high)
+            left = np.random.randint(0, 10)
             peak = np.random.randint(left, high)
-            right = np.random.randint(peak, high)
+            right = np.random.randint(0, 10)
             # processing_time[job, machine] = [left, peak, right]
-            processing_time['left'][job, machine] = left
+            processing_time['left'][job, machine] = peak - left if peak - left >= 1 else peak
             processing_time['peak'][job, machine] = peak
-            processing_time['right'][job, machine] = right
+            processing_time['right'][job, machine] = peak + right if peak + right <= 99 else peak
 
     # 机器编号，从0开始, shape (n_j,n_m), 每一行代表一个job的机器处理顺序
     task_machines = np.expand_dims(np.arange(0, n_m), axis=0).repeat(repeats=n_j, axis=0)
@@ -72,15 +80,13 @@ def gen_and_save(n_j=6, n_m=6, low=1, high=99, batch_size=100, seed=200):
     print(data.shape)
     folder = os.path.join(get_project_root(), "data")
     os.makedirs(folder, exist_ok=True)
-    np.save(os.path.join(folder, "generatedData{}_{}_Seed{}.npy".format(n_j, n_m, seed)), data)
+    np.save(os.path.join(folder, "generatedData{}_{}_BatchSize{}_Seed{}.npy".format(n_j, n_m, batch_size, seed)), data)
 
 
 if __name__ == '__main__':
-    j = 6
-    m = 6
-    l = 1
-    h = 99
-    batch_size = 100
-    seed = 200
-
-    gen_and_save(j, m, l, h, batch_size, seed)
+    gen_and_save(n_j=10,
+                 n_m=10,
+                 low=1,
+                 high=99,
+                 batch_size=10,
+                 seed=200)
