@@ -70,12 +70,15 @@ class BaseEnv(gym.Env, ABC):
             "right": self.task_durations['right'][row, col],
         }
         
-        machine_id = self.task_machines[row, col]
+        machine_id = int(self.task_machines[row, col])
         
         # 三种操作时间下的是否都可以插入当前已调度机器时间中的空闲片段
-        inserted_left, start_time_left, insert_pos_left = self.insert_task(self.machine_occupied_times['left'][machine_id], task_id, job_task_ready_time['left'], task_duration['left'])
-        inserted_peak, start_time_peak, insert_pos_peak = self.insert_task(self.machine_occupied_times['peak'][machine_id], task_id, job_task_ready_time['peak'], task_duration['peak'])
-        inserted_right, start_time_right, insert_pos_right = self.insert_task(self.machine_occupied_times['right'][machine_id], task_id, job_task_ready_time['right'], task_duration['right'])
+        inserted_left, start_time_left, insert_pos_left = self.insert_task(
+            self.machine_occupied_times['left'][machine_id], task_id, job_task_ready_time['left'], task_duration['left'])
+        inserted_peak, start_time_peak, insert_pos_peak = self.insert_task(
+            self.machine_occupied_times['peak'][machine_id], task_id, job_task_ready_time['peak'], task_duration['peak'])
+        inserted_right, start_time_right, insert_pos_right = self.insert_task(
+            self.machine_occupied_times['right'][machine_id], task_id, job_task_ready_time['right'], task_duration['right'])
         
         start_time = {
             "left": start_time_left,
