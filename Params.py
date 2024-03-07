@@ -55,7 +55,7 @@ parser.add_argument("--entloss_coef", type=float, default=0.01, help="entropy lo
 
 # args for training
 parser.add_argument("--test", action="store_true", default=False, help="是否执行测试，否-训练")
-parser.add_argument("--output", type=str, default="output/gnn_dispatch", help="root path of output dir")
+parser.add_argument("--output", type=str, default="output/drl_fjssp", help="root path of output dir")
 parser.add_argument("--model_dir", type=str, default="model", help="folder path to save/load neural network models")
 parser.add_argument("--val_frequency", type=int, default=100, help="frequency for validation")
 

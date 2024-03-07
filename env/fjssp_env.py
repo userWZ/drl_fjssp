@@ -80,7 +80,7 @@ class FjsspEnv(BaseEnv):
         if "data" in kwargs:
             (self.task_durations['left'], self.task_durations['peak'], self.task_durations['right'],
              self.task_machines) = kwargs.get("data")
-            self.n_j, self.n_m = self.task_durations.shape
+            self.n_j, self.n_m = self.task_durations["left"].shape
         else:
             self.n_j = kwargs.get("n_j")
             self.n_m = kwargs.get("n_m")
