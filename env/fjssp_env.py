@@ -6,9 +6,8 @@ import matplotlib.colors as mc
 import numpy as np
 from gym.core import ObsType
 
-# todo 修复这里的bug
-from env.utils import gen_instance_uniformly, gen_instance_triangle
-from env.base_env import BaseEnv
+from .utils import gen_instance_uniformly, gen_instance_triangle
+from .base_env import BaseEnv
 
 
 class TFN:
@@ -245,16 +244,17 @@ class FjsspEnv(BaseEnv):
         构建邻接矩阵
         """
         adj_matrix = np.eye(self.task_size, dtype=np.single)
-        for i in range(1, 1 + self.task_size):
-            if i == 0 or i % self.n_m != 0:
-                for j in range(1, self.task_size):
-                    if i == j:
-                        adj_matrix[i - 1, j] = 1
+        # for i in range(1, 1 + self.task_size):
+        #     if i == 0 or i % self.n_m != 0:
+        #         for j in range(1, self.task_size):
+        #             if i == j:
+        #                 adj_matrix[i - 1, j] = 1
 
         # 根据scheduled_task_ids更新邻接矩阵
         for tasks in self.machine_occupied_times['left']:
             for i in range(0, len(tasks) - 1):
                 adj_matrix[tasks[i][0], tasks[i + 1][0]] = 1
+                adj_matrix[tasks[i + 1][0], tasks[i][0]] = 1
 
         return adj_matrix
 

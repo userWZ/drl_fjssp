@@ -1,5 +1,27 @@
 import numpy as np
 def read_dataset(dataset_url):
+    if "instance" in dataset_url:
+        # 读取文件内容
+        with open(dataset_url, 'r') as file:
+            content = file.readlines()
+
+
+        # 处理第一部分，生成6*6的方针数组
+        pinwheel = [[int(num) for num in line.split()] for line in content[:10]]
+        
+        # 处理第二部分，生成(6*6*3)的三维数组
+        three_dim_array = []
+        for line in content[10:]:
+            line = line.replace(","," ").replace("(", " ").replace(")", " ").split()
+            temp = []
+            for i in range(0, len(line), 3):
+                temp.append([int(line[i]), int(line[i+1]), int(line[i+2])])
+            three_dim_array.append(temp)  
+        # 将方针数组插入到三维数组中
+        for row in range(len(three_dim_array)):
+            for col in range(len(three_dim_array[0])):
+                three_dim_array[row][col].insert(0, pinwheel[row][col])
+        return three_dim_array
     with open(dataset_url, 'r') as file:
         processing_time = []
         # 逐行读取文件内容
@@ -58,4 +80,4 @@ def decade(a, b):
 
 
 if __name__ == '__main__':
-    get_schedule("data/gao6_6_1.txt","solutions/sol6_6_1.txt")
+    machine_schedule = get_schedule("visualization\data\gao10_10_1.txt","visualization\solutions\sol10_10_1.txt")

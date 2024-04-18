@@ -39,8 +39,8 @@ def draw_fuzzy_gantt_from_df(df, machine_nb):
         machine_idx = int(row['Machine'])
         start = [row['start_left'], row['start_peak'], row['start_right']]
         end = row['end_left'], row['end_peak'], row['end_right']
-        job_idx = int(row['Job']) + 1
-        task_idx = int(row['Operation']) + 1
+        job_idx = int(row['Job'])
+        task_idx = int(row['Operation'])
         y = machine_idx + 1 
         if start == [0, 0, 0]:
             
@@ -63,5 +63,5 @@ def draw_fuzzy_gantt_from_df(df, machine_nb):
     plt.show()
         
 if __name__ == '__main__':
-    machine_schedule = get_schedule("data/gao10_10_1.txt","solutions/sol10_10_1.txt")
+    machine_schedule = get_schedule("visualization\data\gao10_10_4.txt","visualization\solutions\sol10_10_4.txt")
     draw_fuzzy_gantt(machine_schedule, len(machine_schedule))
