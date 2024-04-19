@@ -6,8 +6,8 @@ import matplotlib.colors as mc
 import numpy as np
 from gym.core import ObsType
 
-from .utils import gen_instance_uniformly, gen_instance_triangle
-from .base_env import BaseEnv
+from env.utils import gen_instance_uniformly, gen_instance_triangle
+from env.base_env import BaseEnv
 
 
 class TFN:

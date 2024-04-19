@@ -80,13 +80,13 @@ def gen_and_save(n_j=6, n_m=6, low=1, high=99, batch_size=100, seed=200):
     print(data.shape)
     folder = os.path.join(get_project_root(), "data")
     os.makedirs(folder, exist_ok=True)
-    np.save(os.path.join(folder, "generatedData{}_{}_BatchSize{}_Seed{}.npy".format(n_j, n_m, batch_size, seed)), data)
+    np.save(os.path.join(folder, "generatedData{}_{}_instanceNums{}_Seed{}.npy".format(n_j, n_m, batch_size, seed)), data)
 
 
 if __name__ == '__main__':
-    gen_and_save(n_j=20,
-                 n_m=20,
-                 low=1,
+    gen_and_save(n_j=10,
+                 n_m=10,
+                 low=10,
                  high=99,
                  batch_size=100,
                  seed=200)

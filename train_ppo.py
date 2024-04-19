@@ -34,8 +34,8 @@ def main():
 
     env = FjsspEnv(configs.n_j, configs.n_m, configs.low, configs.high, configs.device)
     vali_data = np.load(
-        os.path.join(global_util.get_project_root(), "data", "generatedData{}_{}_BatchSize100_Seed{}.npy").format(
-            configs.n_j, configs.n_m, configs.np_seed_validation
+        os.path.join(global_util.get_project_root(), "data", "generatedData{}_{}_instanceNums{}_Seed{}.npy").format(
+            configs.n_j, configs.n_m, configs.instance_nums,configs.np_seed_validation
         )
     )
 
@@ -66,6 +66,7 @@ def main():
         runner.test(vali_data, ppo, float("inf"), 0, phase="test")
     else:
         runner.train(ppo)
+    
 
 
 if __name__ == "__main__":

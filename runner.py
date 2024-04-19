@@ -10,19 +10,29 @@ from jssp_tool.util import logger
 from tensorboardX import SummaryWriter
 from visualization.visual import *
 from result_generator import to_dataframe
-
-
+import datetime
+import io
+from PIL import Image
+import torchvision.transforms as transforms
+    
+    
 class Runner:
     def __init__(self, configs, env, vali_data):
         self.configs = configs
-        self.output = os.path.join(global_util.get_project_root(), self.configs.output)
-        self.model_dir = os.path.join(self.output, configs.model_dir)
-        os.makedirs(self.model_dir, exist_ok=True)
+        run_time = datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
+        output_prefix = "j{}_m{}_seed{}_{}".format(configs.n_j, configs.n_m, configs.torch_seed, run_time)
+        self.output = os.path.join(global_util.get_project_root(), self.configs.output, output_prefix)
+        if not os.path.exists(self.output):
+            os.makedirs(self.output)
+        # self.model_dir = os.path.join(self.output, configs.model_dir)
+        # os.makedirs(self.model_dir, exist_ok=True)
 
         self.env = env
         self.vali_data = vali_data
         self.device = configs.device
-        self.writer = SummaryWriter(logdir='runs/drl_fjssp')
+        self.log_dir = os.path.join(configs.log_dir, output_prefix)
+        os.makedirs(self.log_dir, exist_ok=True)
+        self.writer = SummaryWriter(logdir=self.log_dir)
         self.gamma = configs.gamma
 
     def to_tensor(self, adj, fea, candidate, mask):
@@ -85,7 +95,7 @@ class Runner:
     def test(self, vali_data, ppo, best_result, i_update, phase="val"):
         make_spans = []
         schedule_list = []
-        for data in vali_data:
+        for i, data in enumerate(vali_data):
             obs, _ = self.env.reset(data=data)
             rewards = 0
             while True:
@@ -96,8 +106,21 @@ class Runner:
                 obs, reward, done, _, _ = self.env.step(action.item())
                 rewards += reward
                 if done:
+                    
                     break
             make_spans.append(self.env.cur_make_span)
+            if i % 10 == 0:
+                plt.figure()
+                self.env.render()
+                buf = io.BytesIO()
+                plt.savefig(buf, format='png')
+                buf.seek(0)
+                img = Image.open(buf)
+                img_tensor = transforms.ToTensor()(img)
+                self.writer.add_image("test/render", img_tensor, i_update)
+                buf.close()
+                plt.close()
+                
             if phase == "test":
                 df_schedule = to_dataframe(self.env.task_durations, self.env.task_machines, self.env.low_bounds)
                 draw_fuzzy_gantt_from_df(df_schedule, self.env.n_m)
