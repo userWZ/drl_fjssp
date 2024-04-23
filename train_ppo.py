@@ -11,6 +11,7 @@ from models.actor_critic import ActorCritic
 from runner import Runner
 from jssp_tool.env.util import set_random_seed
 from jssp_tool.rl.agent.ppo.ppo_discrete import PPODiscrete
+import json
 
 configs.device = torch.device(configs.device if torch.cuda.is_available() else "cpu")
 
@@ -67,6 +68,9 @@ def main():
         # 测试
         runner.test(vali_data, ppo, float("inf"), 0, phase="test")
     else:
+        configs.device = str(configs.device)
+        with open(os.path.join(configs.output, "config.json"), 'w') as f:
+            json.dump(vars(configs), f)
         runner.train(ppo)
     
 

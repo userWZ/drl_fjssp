@@ -1,5 +1,6 @@
 import argparse
-
+import datetime
+import os
 parser = argparse.ArgumentParser(description="Arguments for ppo_fjssp")
 # args for device
 parser.add_argument("--device", type=str, default="cuda:0", help="Number of jobs of instances")
@@ -55,11 +56,15 @@ parser.add_argument("--entloss_coef", type=float, default=0.01, help="entropy lo
 
 # args for training
 parser.add_argument("--test", action="store_true", default=False, help="是否执行测试，否-训练")
-parser.add_argument("--output", type=str, default="output/drl_fjssp", help="root path of output dir")
+parser.add_argument("--output", type=str, default="output/", help="root path of output dir")
 parser.add_argument("--model_dir", type=str, default="model", help="folder path to save/load neural network models")
 parser.add_argument("--val_frequency", type=int, default=100, help="frequency for validation")
 parser.add_argument("--log_dir", type=str, default="runs/", help="root path of log dir")
 parser.add_argument("--instance_nums", type=int, default=100, help="number of instances for validation")
+parser.add_argument("--output_prefix", type=str, default='', help="prefix of output dir")
 configs = parser.parse_args()
-
-output_prefix = "jobs{}_machines{}_seed_{}_{}".format(configs['n_j'], configs['n_m'])
+run_time = datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
+output_prefix = "j{}_m{}_seed{}_{}".format(configs.n_j, configs.n_m, configs.torch_seed, run_time)
+configs.output = os.path.join(configs.output, output_prefix)
+configs.output_prefix = output_prefix
+configs.log_dir = os.path.join(configs.log_dir, output_prefix)

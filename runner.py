@@ -19,18 +19,15 @@ import torchvision.transforms as transforms
 class Runner:
     def __init__(self, configs, env, vali_data):
         self.configs = configs
-        run_time = datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
-        output_prefix = "j{}_m{}_seed{}_{}".format(configs.n_j, configs.n_m, configs.torch_seed, run_time)
-        self.output = os.path.join(global_util.get_project_root(), self.configs.output, output_prefix)
-        if not os.path.exists(self.output):
-            os.makedirs(self.output)
+        if not os.path.exists(self.configs.output):
+            os.makedirs(self.configs.output)
         # self.model_dir = os.path.join(self.output, configs.model_dir)
         # os.makedirs(self.model_dir, exist_ok=True)
 
         self.env = env
         self.vali_data = vali_data
         self.device = configs.device
-        self.log_dir = os.path.join(configs.log_dir, output_prefix)
+        self.log_dir = os.path.join(configs.log_dir, self.configs.output_prefix)
         os.makedirs(self.log_dir, exist_ok=True)
         self.writer = SummaryWriter(logdir=self.log_dir)
         self.gamma = configs.gamma
