@@ -40,11 +40,10 @@ class Runner:
         return adj_tensor, fea_tensor, candidate_tensor, mask_tensor
 
     def collect_data(self, ppo, memories, ep_rewards, ep_makespan):
-        n_j = random.randint(6, 10)
-        n_m = random.randint(6, 10)
+        
         with torch.no_grad():
             for i in range(self.configs.num_envs):
-                obs, _ = self.env.reset(n_j=n_j, n_m=n_m)
+                obs, _ = self.env.reset(n_j=self.configs.n_j, n_m=self.configs.n_m)
                 done = False
                 while not done:
                     obs = self.to_tensor(*obs)
@@ -85,6 +84,8 @@ class Runner:
             self.writer.add_scalar("train/reward", mean_ep_reward, i_update)
             self.writer.add_scalar("train/loss", loss_sum, i_update)
             self.writer.add_scalar("train/make_span", sum(ep_makespan) / len(ep_makespan), i_update)
+            self.writer.add_scalar("train/v_loss", v_loss, i_update)
+            self.writer.add_scalar("train/a_loss", a_loss, i_update)
 
             if (i_update + 1) % self.configs.val_frequency == 0:
                 best_result = self.test(self.vali_data, agent, best_result, i_update)
@@ -106,7 +107,7 @@ class Runner:
                     
                     break
             make_spans.append(self.env.cur_make_span)
-            if i % 10 == 0:
+            if i == 0:
                 plt.figure()
                 self.env.render()
                 buf = io.BytesIO()

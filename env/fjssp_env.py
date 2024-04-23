@@ -191,8 +191,14 @@ class FjsspEnv(BaseEnv):
         self.estimated_max_end_time["left"] = np.max(self.low_bounds["left"])
         self.estimated_max_end_time["peak"] = np.max(self.low_bounds["peak"])
         self.estimated_max_end_time["right"] = np.max(self.low_bounds["right"])
-        
-        terminated = len(self.scheduled_task_ids) == self.task_size
+        terminated = False
+        if len(self.scheduled_task_ids) == self.task_size:
+            terminated = True
+            # calculate makespan
+            cur_make_span = np.max(self.compute_expect_fuzzy(self.low_bounds['left'][:, -1], 
+                                                             self.low_bounds['peak'][:, -1],
+                                                             self.low_bounds['right'][:, -1]))
+            self.cur_make_span = cur_make_span
         
         info = {}
         
@@ -234,6 +240,19 @@ class FjsspEnv(BaseEnv):
             plt.fill(triangleX, triangleY, colors[job_idx])  # 绘制结束时间的三角形
             plt.text(end[1], y+0.3, str(job_idx)+','+str(task_idx), verticalalignment='center', horizontalalignment='center', fontsize=6)  # 在结束时间的三角形上添加文本标签
         plt.show()
+    
+    def compute_expect_fuzzy(self, left, peak, right):
+        """
+        计算三角模糊数的期望
+        Args:
+            left:
+            peak:
+            right:
+
+        Returns:
+
+        """
+        return (left + 2*peak + right) / 4
 
     def update_low_bounds(self, row, col):
         for key in self.low_bounds.keys():
