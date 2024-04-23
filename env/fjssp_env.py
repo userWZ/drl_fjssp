@@ -156,7 +156,9 @@ class FjsspEnv(BaseEnv):
 
             # 计算执行当前task结束时间
             self.compute_task_schedule_time(task_id, row, col)
+            # 更新low_bounds, 根据已调度的task更新其后续的task的预期完成时间
             self.update_low_bounds(row, col)
+            # 根据调度结果，重新生成邻接矩阵
             self.adj_matrix = self.build_adjacency_matrix()
 
         # 如果不是某个job的最后一个task，更新下一次的candidate
@@ -182,6 +184,7 @@ class FjsspEnv(BaseEnv):
             'peak': self.estimated_max_end_time["peak"] - np.max(self.low_bounds["peak"]),
             'right': self.estimated_max_end_time["right"] - np.max(self.low_bounds["right"]),
         }
+        # TODO  改进奖励函数
         total_reward = reward["left"] + reward["peak"] + reward["right"]
                     
         # 最小化最大完成时间
@@ -198,6 +201,12 @@ class FjsspEnv(BaseEnv):
         return obs, total_reward, terminated, False, info
 
     def render(self):
+        """
+        可视化
+        Returns
+        -------
+
+        """
         plt.figure(figsize=(12, 8))
         colors = list(mc.TABLEAU_COLORS.keys())
         for machine_idx in range(1, self.n_m+1):

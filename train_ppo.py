@@ -40,7 +40,9 @@ def main():
     )
 
     model = ActorCritic(
+        # job number
         n_j=configs.n_j,
+        # machine number
         n_m=configs.n_m,
         num_layers=configs.num_layers,
         learn_eps=False,

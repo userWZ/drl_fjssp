@@ -61,9 +61,6 @@ def evaluation(dataset=r'visualization/data/instances/S10.1.txt', ppo=None):
     makespan = env.cur_make_span
     df_schedule = to_dataframe(env.task_durations, env.task_machines, env.low_bounds)
     draw_fuzzy_gantt_from_df(df_schedule, env.n_m)
-    
-    
-    
 
 
 if __name__ == '__main__':

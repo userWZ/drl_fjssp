@@ -90,6 +90,7 @@ class BaseEnv(gym.Env, ABC):
             self.put_between(task_id, machine_id, start_time, insert_pos_left, task_duration)
         else:
             # 三种操作时间任何一个的插入会导致覆盖已有调度时间片段，则调度顺序都要则放到最后, 即机器的最后
+            # 重新计算start_time,保证其必定是machine_ready_time, job_task_ready_time[key]的最大值
             for key in start_time.keys():
                 machine_ready_time = 0
                 if len(self.machine_occupied_times[key][machine_id]) > 0:
@@ -100,18 +101,21 @@ class BaseEnv(gym.Env, ABC):
         self.cur_make_span = np.max(self.task_finish_times["right"])
     
     def insert_task(self, machine_occupied_times_true, task_id, job_task_ready_time, task_duration):
-        """_summary_
+        """
+        根据机器被占用的时间，考虑将task插入到什么位置
 
         Args:
-            machine_occupied_times (_type_): _description_
-            task_id (_type_): _description_
-            machine_id (_type_): _description_
-            job_task_ready_time (_type_): _description_
-            task_duration (_type_): _description_
-            insert_pos (_type_): _description_
+            machine_occupied_times (List): task所对应机器被占用的时间段
+            task_id (int): task的id
+            job_task_ready_time (int): task前序task的结束时间
+            task_duration (_type_):  task持续时间
+        Returns:
+            inserted: 是否被插入
+            start_time: 计算得到的task的开始时间
+            insert_pos: 插入位置（如果为-1则直接安排到末尾）
         """
         # 寻找可用的插入空隙
-        # 记录机器被task占用的时间段, list of tuples, [(task,起始时间,结束时间),...]
+        # 记录机器被task占用的时间段, list of tuples,  [[(task,起始时间,结束时间),...],[],[],...]
         machine_occupied_times = copy.deepcopy(machine_occupied_times_true)
         insert_pos = -1
         inserted = False
@@ -156,7 +160,7 @@ class BaseEnv(gym.Env, ABC):
         :param task_id: 插入的任务ID
         :param machine_id: 机器id
         :param start_time: 开始时间
-        :param insert_pos: 插入为止
+        :param insert_pos: 插入位置
         :param task_duration:
         :return:
         """
