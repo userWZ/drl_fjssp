@@ -1,27 +1,33 @@
 import numpy as np
+import re
+
 def read_dataset(dataset_url):
     if "instance" in dataset_url:
-        # 读取文件内容
         with open(dataset_url, 'r') as file:
-            content = file.readlines()
-
-
-        # 处理第一部分，生成6*6的方针数组
-        pinwheel = [[int(num) for num in line.split()] for line in content[:10]]
+            lines = file.readlines()
+    
+        # 获取作业数和机器数
+        jobs = int(lines[1].strip())
+        machines = int(lines[3].strip())
+            # 初始化矩阵
+        sequence_matrix = []
+        duration_matrix = []
+        # 读取序列矩阵
+        for i in range(5, 5 + jobs):
+            sequence = list(map(int, lines[i].strip().split()))
+            sequence_matrix.append(sequence)
+        for i in range(6 + jobs, 6 + 2 * jobs):
+            # 移除行中所有的括号
+            matches = re.findall(r'\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)', lines[i])
+            durations = [list(map(int, match)) for match in matches]
+            duration_matrix.append(durations)
         
-        # 处理第二部分，生成(6*6*3)的三维数组
-        three_dim_array = []
-        for line in content[10:]:
-            line = line.replace(","," ").replace("(", " ").replace(")", " ").split()
-            temp = []
-            for i in range(0, len(line), 3):
-                temp.append([int(line[i]), int(line[i+1]), int(line[i+2])])
-            three_dim_array.append(temp)  
         # 将方针数组插入到三维数组中
-        for row in range(len(three_dim_array)):
-            for col in range(len(three_dim_array[0])):
-                three_dim_array[row][col].insert(0, pinwheel[row][col])
-        return three_dim_array
+        for row in range(len(duration_matrix)):
+            for col in range(len(duration_matrix[0])):
+                duration_matrix[row][col].insert(0, sequence_matrix[row][col])
+        return duration_matrix
+        
     with open(dataset_url, 'r') as file:
         processing_time = []
         # 逐行读取文件内容
@@ -33,6 +39,7 @@ def read_dataset(dataset_url):
             groups = [list(map(int, numbers[i:i + 4])) for i in range(0, len(numbers), 4)]
             processing_time.append(groups)
     return processing_time
+
 def read_solution(solution_url):
     with open(solution_url, 'r') as file:
         # 读取第一行，并将其转换为整数列表
@@ -80,4 +87,4 @@ def decade(a, b):
 
 
 if __name__ == '__main__':
-    machine_schedule = get_schedule("visualization\data\gao10_10_1.txt","visualization\solutions\sol10_10_1.txt")
+    machine_schedule = get_schedule("visualization/data/instances/S10.2.txt","visualization\solutions\sol10_10_1.txt")

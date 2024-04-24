@@ -12,6 +12,7 @@ from visualization.utils import read_dataset
 from result_generator import to_dataframe
 from models.actor_critic import ActorCritic
 from jssp_tool.rl.agent.ppo.ppo_discrete import PPODiscrete
+import pandas as pd
 configs.device = torch.device(configs.device if torch.cuda.is_available() else "cpu")
 
 
@@ -35,7 +36,7 @@ def to_tensor(adj, fea, candidate, mask):
         mask_tensor = torch.from_numpy(np.copy(mask)).to(configs.device).unsqueeze(0)
         return adj_tensor, fea_tensor, candidate_tensor, mask_tensor
     
-def evaluation(dataset=r'visualization/data/instances/S10.2.txt', ppo=None):
+def evaluation(dataset=r'visualization/data/instances/Ta80_F.txt', ppo=None, render=False):
     processing_time = read_dataset(dataset)
     # 假设你的三维列表名为three_dimensional_list
     # 创建四个空的二维列表，分别用于存放包含a、b、c、d的元素
@@ -49,18 +50,23 @@ def evaluation(dataset=r'visualization/data/instances/S10.2.txt', ppo=None):
 
     obs, _ = env.reset(data=data)
     reward = 0
+    index = 0
     while True:
+        index = index + 1
         obs = to_tensor(*obs)
         pi, value = ppo.policy_old(obs)
         action, a_idx, logprob = ppo.sample_action(pi, obs[2])
+        # print(index, action.item())
         next_obs, reward, done, _, _ = env.step(action.item())
         obs = next_obs
         if done:
             break
     makespan = env.cur_make_span
-    print(makespan)
-    df_schedule = to_dataframe(env.task_durations, env.task_machines, env.low_bounds)
-    draw_fuzzy_gantt_from_df(df_schedule, env.n_m)
+    # print(makespan)
+    if render:
+        df_schedule = to_dataframe(env.task_durations, env.task_machines, env.low_bounds)
+        draw_fuzzy_gantt_from_df(df_schedule, env.n_m)
+    return makespan
 
 
 if __name__ == '__main__':
@@ -79,9 +85,20 @@ if __name__ == '__main__':
         device=configs.device,
     )
     ppo = build_ppo(model)
-    ppo.policy.load_state_dict(torch.load("output/j10_m10_seed600/2024-04-23-23-42-36/best.pth", configs.device), False)
+    
+    ppo.policy.load_state_dict(torch.load("output\j10_m10_seed600\\2024-04-24-14-38-57\\best.pth", configs.device), False)
 
-    evaluation(ppo=ppo)
+    instances_dir = r'visualization\data\instances'
+    instances = os.listdir(instances_dir)
+    results = []
+    for instance in instances:
+        instance_path = os.path.join(instances_dir, instance)
+        makespan = evaluation(dataset=instance_path, ppo=ppo)
+        results.append([instance, makespan])
+        print(instance, makespan)
+
+    df_results = pd.DataFrame(results, columns=['Instance', 'Makespan'])
+    df_results.to_csv('results.csv', index=False)
 
 
 
