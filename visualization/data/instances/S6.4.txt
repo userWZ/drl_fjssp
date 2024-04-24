@@ -1,4 +1,4 @@
-﻿//Numero de trabajos
+//Numero de trabajos
 6
 //Numero de tareas
 6
