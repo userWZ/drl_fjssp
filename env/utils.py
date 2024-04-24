@@ -84,8 +84,8 @@ def gen_and_save(n_j=6, n_m=6, low=1, high=99, batch_size=100, seed=200):
 
 
 if __name__ == '__main__':
-    gen_and_save(n_j=20,
-                 n_m=15,
+    gen_and_save(n_j=15,
+                 n_m=10,
                  low=1,
                  high=99,
                  batch_size=100,

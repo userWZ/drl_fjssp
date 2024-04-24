@@ -35,7 +35,7 @@ def to_tensor(adj, fea, candidate, mask):
         mask_tensor = torch.from_numpy(np.copy(mask)).to(configs.device).unsqueeze(0)
         return adj_tensor, fea_tensor, candidate_tensor, mask_tensor
     
-def evaluation(dataset=r'visualization/data/instances/S10.1.txt', ppo=None):
+def evaluation(dataset=r'visualization/data/instances/S10.2.txt', ppo=None):
     processing_time = read_dataset(dataset)
     # 假设你的三维列表名为three_dimensional_list
     # 创建四个空的二维列表，分别用于存放包含a、b、c、d的元素
@@ -57,8 +57,8 @@ def evaluation(dataset=r'visualization/data/instances/S10.1.txt', ppo=None):
         obs = next_obs
         if done:
             break
-    
     makespan = env.cur_make_span
+    print(makespan)
     df_schedule = to_dataframe(env.task_durations, env.task_machines, env.low_bounds)
     draw_fuzzy_gantt_from_df(df_schedule, env.n_m)
 
@@ -79,7 +79,7 @@ if __name__ == '__main__':
         device=configs.device,
     )
     ppo = build_ppo(model)
-    ppo.policy.load_state_dict(torch.load(os.path.join(configs.output, "best.pth"), configs.device), False)
+    ppo.policy.load_state_dict(torch.load("output/j10_m10_seed600/2024-04-23-23-42-36/best.pth", configs.device), False)
 
     evaluation(ppo=ppo)
 

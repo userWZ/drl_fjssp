@@ -41,7 +41,7 @@ def draw_fuzzy_gantt_from_df(df, machine_nb):
         end = row['end_left'], row['end_peak'], row['end_right']
         job_idx = int(row['Job'])
         task_idx = int(row['Operation'])
-        y = machine_idx + 1 
+        y = machine_idx + 2
         if start == [0, 0, 0]:
             
             plt.scatter(0, y, color=colors[job_idx])  # 绘制起始点

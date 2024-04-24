@@ -19,15 +19,15 @@ import torchvision.transforms as transforms
 class Runner:
     def __init__(self, configs, env, vali_data):
         self.configs = configs
-        if not os.path.exists(self.configs.output):
-            os.makedirs(self.configs.output)
-        # self.model_dir = os.path.join(self.output, configs.model_dir)
-        # os.makedirs(self.model_dir, exist_ok=True)
+        if not os.path.exists(configs.output):
+            os.makedirs(configs.output)
+        self.model_dir = os.path.join(configs.output, configs.model_dir)
+        os.makedirs(self.model_dir, exist_ok=True)
 
         self.env = env
         self.vali_data = vali_data
         self.device = configs.device
-        self.log_dir = os.path.join(configs.log_dir, self.configs.output_prefix)
+        self.log_dir = os.path.join(configs.log_dir)
         os.makedirs(self.log_dir, exist_ok=True)
         self.writer = SummaryWriter(logdir=self.log_dir)
         self.gamma = configs.gamma
@@ -40,9 +40,11 @@ class Runner:
         return adj_tensor, fea_tensor, candidate_tensor, mask_tensor
 
     def collect_data(self, ppo, memories, ep_rewards, ep_makespan):
-        
+        # n_j = random.randint(6, 10)
+        # n_m = random.randint(6, 10)
         with torch.no_grad():
             for i in range(self.configs.num_envs):
+                # obs, _ = self.env.reset(n_j=n_j, n_m=n_m)
                 obs, _ = self.env.reset(n_j=self.configs.n_j, n_m=self.configs.n_m)
                 done = False
                 while not done:
@@ -90,6 +92,9 @@ class Runner:
             if (i_update + 1) % self.configs.val_frequency == 0:
                 best_result = self.test(self.vali_data, agent, best_result, i_update)
 
+            if (i_update + 1) % self.configs.save_frequency == 0:
+                torch.save(agent.policy.state_dict(), os.path.join(self.model_dir, "episode_{}.pth".format(i_update)))
+
     def test(self, vali_data, ppo, best_result, i_update, phase="val"):
         make_spans = []
         schedule_list = []
@@ -107,17 +112,17 @@ class Runner:
                     
                     break
             make_spans.append(self.env.cur_make_span)
-            if i == 0:
-                plt.figure()
-                self.env.render()
-                buf = io.BytesIO()
-                plt.savefig(buf, format='png')
-                buf.seek(0)
-                img = Image.open(buf)
-                img_tensor = transforms.ToTensor()(img)
-                self.writer.add_image("test/render", img_tensor, i_update)
-                buf.close()
-                plt.close()
+            # if i == 0:
+            #     plt.figure()
+            #     self.env.render()
+            #     buf = io.BytesIO()
+            #     plt.savefig(buf, format='png')
+            #     buf.seek(0)
+            #     img = Image.open(buf)
+            #     img_tensor = transforms.ToTensor()(img)
+            #     self.writer.add_image("test/render", img_tensor, i_update)
+            #     buf.close()
+            #     plt.close()
                 
             if phase == "test":
                 df_schedule = to_dataframe(self.env.task_durations, self.env.task_machines, self.env.low_bounds)
@@ -126,7 +131,7 @@ class Runner:
 
         avg_makespan = np.mean(make_spans)
         if avg_makespan < best_result:
-            torch.save(ppo.policy.state_dict(), os.path.join(self.output, "best.pth"))
+            torch.save(ppo.policy.state_dict(), os.path.join(self.configs.output, "best.pth"))
             best_result = avg_makespan
         logger.info("i_update: {}, 测试平均制造周期：{}".format(i_update, avg_makespan))
         self.writer.add_scalar(phase + "/平均制造周期", avg_makespan, i_update)
