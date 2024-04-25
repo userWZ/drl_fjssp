@@ -5,8 +5,8 @@ parser = argparse.ArgumentParser(description="Arguments for ppo_fjssp")
 # args for device
 parser.add_argument("--device", type=str, default="cuda:0", help="Number of jobs of instances")
 # args for env
-parser.add_argument("--n_j", type=int, default=10, help="Number of jobs of instance")
-parser.add_argument("--n_m", type=int, default=10, help="Number of machines instance")
+parser.add_argument("--n_j", type=int, default=100, help="Number of jobs of instance")
+parser.add_argument("--n_m", type=int, default=20, help="Number of machines instance")
 parser.add_argument("--rewardscale", type=float, default=0.0, help="Reward scale for positive rewards")
 parser.add_argument(
     "--init_quality_flag", type=bool, default=False, help="Flag of whether init state quality is 0, True for 0"

@@ -11,6 +11,7 @@ from models.actor_critic import ActorCritic
 from runner import Runner
 from jssp_tool.env.util import set_random_seed
 from jssp_tool.rl.agent.ppo.ppo_discrete import PPODiscrete
+from env.utils import gen_and_save
 import json
 
 configs.device = torch.device(configs.device if torch.cuda.is_available() else "cpu")
@@ -34,11 +35,15 @@ def main():
     set_random_seed(configs.torch_seed)
 
     env = FjsspEnv(configs.n_j, configs.n_m, configs.low, configs.high, configs.device)
-    vali_data = np.load(
-        os.path.join(global_util.get_project_root(), "data", "generatedData{}_{}_instanceNums{}_Seed{}.npy").format(
+    vali_data_dir =  os.path.join(global_util.get_project_root(), "data", "generatedData{}_{}_instanceNums{}_Seed{}.npy").format(
             configs.n_j, configs.n_m, configs.instance_nums,configs.np_seed_validation
         )
-    )
+    if not os.path.exists(vali_data_dir):
+        gen_and_save(n_j=configs.n_j, n_m=configs.n_m, low=configs.low, high=configs.high,
+                batch_size=configs.instance_nums, seed=configs.np_seed_train)
+        vali_data = np.load(vali_data_dir)
+    else:
+        vali_data = np.load(vali_data_dir)
 
     model = ActorCritic(
         # job number
