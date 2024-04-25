@@ -86,8 +86,9 @@ if __name__ == '__main__':
     )
     ppo = build_ppo(model)
     
-    ppo.policy.load_state_dict(torch.load(r"output\j10_m10_seed600\2024-04-23-23-42-36\best.pth", configs.device), False)
-
+    model_path = "output\j10_m10_seed600\\2024-04-24-14-38-57"
+    ppo.policy.load_state_dict(torch.load(os.path.join(model_path, "best.pth"), configs.device), False)
+    
     instances_dir = r'visualization\data\instances'
     instances = os.listdir(instances_dir)
     results = []
@@ -99,6 +100,7 @@ if __name__ == '__main__':
 
     df_results = pd.DataFrame(results, columns=['Instance', 'Makespan'])
     df_results.to_csv('results.csv', index=False)
+    df_results.to_csv(os.path.join(model_path, 'results.csv'), index=False)
 
 
 

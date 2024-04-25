@@ -75,7 +75,7 @@ def main():
     else:
         configs.device = str(configs.device)
         with open(os.path.join(configs.output, "config.json"), 'w') as f:
-            json.dump(vars(configs), f)
+            json.dump(vars(configs), f, indent=4)
         runner.train(ppo)
 
 
