@@ -185,7 +185,7 @@ class FjsspEnv(BaseEnv):
             'right': self.estimated_max_end_time["right"] - np.max(self.low_bounds["right"]),
         }
         # TODO  改进奖励函数
-        total_reward = reward["left"] + reward["peak"] + reward["right"]
+        total_reward = (reward["left"] + 2 * reward["peak"] + reward["right"]) / 4
                     
         # 最小化最大完成时间
         self.estimated_max_end_time["left"] = np.max(self.low_bounds["left"])
