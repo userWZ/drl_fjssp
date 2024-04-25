@@ -72,7 +72,6 @@ def main():
         with open(os.path.join(configs.output, "config.json"), 'w') as f:
             json.dump(vars(configs), f)
         runner.train(ppo)
-    
 
 
 if __name__ == "__main__":

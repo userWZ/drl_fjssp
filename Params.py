@@ -5,8 +5,8 @@ parser = argparse.ArgumentParser(description="Arguments for ppo_fjssp")
 # args for device
 parser.add_argument("--device", type=str, default="cuda:0", help="Number of jobs of instances")
 # args for env
-parser.add_argument("--n_j", type=int, default=10, help="Number of jobs of instance")
-parser.add_argument("--n_m", type=int, default=10, help="Number of machines instance")
+parser.add_argument("--n_j", type=int, default=20, help="Number of jobs of instance")
+parser.add_argument("--n_m", type=int, default=20, help="Number of machines instance")
 parser.add_argument("--rewardscale", type=float, default=0.0, help="Reward scale for positive rewards")
 parser.add_argument(
     "--init_quality_flag", type=bool, default=False, help="Flag of whether init state quality is 0, True for 0"
@@ -61,7 +61,7 @@ parser.add_argument("--model_dir", type=str, default="model", help="folder path 
 parser.add_argument("--val_frequency", type=int, default=100, help="frequency for validation")
 parser.add_argument("--save_frequency", type=int, default=10000, help="frequency for validation")
 parser.add_argument("--log_dir", type=str, default="runs/", help="root path of log dir")
-parser.add_argument("--instance_nums", type=int, default=100, help="number of instances for validation")
+parser.add_argument("--instance_nums", type=int, default=50, help="number of instances for validation")
 parser.add_argument("--output_prefix", type=str, default='', help="prefix of output dir")
 configs = parser.parse_args()
 run_time = datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S')

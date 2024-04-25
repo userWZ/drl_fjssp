@@ -40,12 +40,12 @@ class Runner:
         return adj_tensor, fea_tensor, candidate_tensor, mask_tensor
 
     def collect_data(self, ppo, memories, ep_rewards, ep_makespan):
-        # n_j = random.randint(6, 10)
-        # n_m = random.randint(6, 10)
+        n_j = random.randint(self.configs.n_j - 2, self.configs.n_j + 2)
+        n_m = random.randint(self.configs.n_m - 2, self.configs.n_m + 2)
         with torch.no_grad():
             for i in range(self.configs.num_envs):
-                # obs, _ = self.env.reset(n_j=n_j, n_m=n_m)
-                obs, _ = self.env.reset(n_j=self.configs.n_j, n_m=self.configs.n_m)
+                obs, _ = self.env.reset(n_j=n_j, n_m=n_m)
+                # obs, _ = self.env.reset(n_j=self.configs.n_j, n_m=self.configs.n_m)
                 done = False
                 while not done:
                     obs = self.to_tensor(*obs)

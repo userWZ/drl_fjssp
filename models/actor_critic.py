@@ -73,9 +73,12 @@ class ActorCritic(nn.Module):
 
     def compute_feature(self, adj, x):
         n_nodes = x.shape[0]
-        graph_pool_batch = g_pool_cal("average", (n_nodes, n_nodes, n_nodes), n_nodes, self.device)
-        graph_pool_step = g_pool_cal("average", (1, n_nodes, n_nodes), n_nodes, self.device)
-        graph_pool = graph_pool_step if adj.shape[0] == n_nodes else graph_pool_batch
+        if adj.shape[0] == n_nodes:
+            graph_pool_step = g_pool_cal("average", (1, n_nodes, n_nodes), n_nodes, self.device)
+            graph_pool = graph_pool_step
+        else:
+            graph_pool_batch = g_pool_cal("average", (n_nodes, n_nodes, n_nodes), n_nodes, self.device)
+            graph_pool = graph_pool_batch
         h_pooled, h_nodes = self.feature_extract(x=x, graph_pool=graph_pool, adj=adj)
         return h_pooled, h_nodes
 
