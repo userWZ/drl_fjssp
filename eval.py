@@ -36,7 +36,7 @@ def to_tensor(adj, fea, candidate, mask):
         mask_tensor = torch.from_numpy(np.copy(mask)).to(configs.device).unsqueeze(0)
         return adj_tensor, fea_tensor, candidate_tensor, mask_tensor
     
-def evaluation(dataset=r'visualization/data/instances/Ta80_F.txt', ppo=None, render=False):
+def evaluation(dataset=r'visualization/data/instances/Ta61_F.txt', ppo=None, render=False):
     processing_time = read_dataset(dataset)
     # 假设你的三维列表名为three_dimensional_list
     # 创建四个空的二维列表，分别用于存放包含a、b、c、d的元素
@@ -85,11 +85,11 @@ if __name__ == '__main__':
         device=configs.device,
     )
     ppo = build_ppo(model)
-    
-    model_path = "output\j10_m10_seed600\\2024-04-24-14-38-57"
+
+    model_path = "output/j50_m20_seed600/2024-04-26-00-52-41"
     ppo.policy.load_state_dict(torch.load(os.path.join(model_path, "best.pth"), configs.device), False)
     
-    instances_dir = r'visualization\data\instances'
+    instances_dir = 'visualization/data/instances'
     instances = os.listdir(instances_dir)
     results = []
     for instance in instances:
@@ -99,7 +99,6 @@ if __name__ == '__main__':
         print(instance, makespan)
 
     df_results = pd.DataFrame(results, columns=['Instance', 'Makespan'])
-    df_results.to_csv('results.csv', index=False)
     df_results.to_csv(os.path.join(model_path, 'results.csv'), index=False)
 
 
