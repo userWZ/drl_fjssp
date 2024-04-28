@@ -269,7 +269,7 @@ class FjsspEnv(BaseEnv):
 
     def build_adjacency_matrix(self):
         """
-        构建邻接矩阵
+        构建邻接矩阵( 有向图 )
         """
         adj_matrix = np.eye(self.task_size, dtype=np.single)
         # for i in range(1, 1 + self.task_size):
@@ -282,7 +282,7 @@ class FjsspEnv(BaseEnv):
         for tasks in self.machine_occupied_times['left']:
             for i in range(0, len(tasks) - 1):
                 adj_matrix[tasks[i][0], tasks[i + 1][0]] = 1
-                adj_matrix[tasks[i + 1][0], tasks[i][0]] = 1
+                # adj_matrix[tasks[i + 1][0], tasks[i][0]] = 1
 
         return adj_matrix
 

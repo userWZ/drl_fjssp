@@ -48,9 +48,10 @@ def gen_instance_triangle(n_j, n_m, low, high):
 
     for job in range(n_j):
         for machine in range(n_m):
-            left = np.random.randint(0, 10)
-            peak = np.random.randint(left, high)
-            right = np.random.randint(0, 10)
+            
+            peak = np.random.randint(low, high)
+            left = np.floor(0.85 * peak)
+            right = np.ceil(1.3 * peak)
             # processing_time[job, machine] = [left, peak, right]
             processing_time['left'][job, machine] = peak - left if peak - left >= 1 else peak
             processing_time['peak'][job, machine] = peak
