@@ -271,7 +271,7 @@ class FjsspEnv(BaseEnv):
         """
         构建邻接矩阵( 有向图 )
         """
-        adj_matrix = np.zeros(self.task_size, dtype=np.single)
+        adj_matrix = np.eye(self.task_size, dtype=np.single)
         # for i in range(1, 1 + self.task_size):
         #     if i == 0 or i % self.n_m != 0:
         #         for j in range(1, self.task_size):
