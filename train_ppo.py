@@ -35,6 +35,8 @@ def main():
     set_random_seed(configs.torch_seed)
 
     env = FjsspEnv(configs.n_j, configs.n_m, configs.low, configs.high, configs.device)
+    
+    
     vali_data_dir =  os.path.join(global_util.get_project_root(), "data", "generatedData{}_{}_instanceNums{}_Seed{}.npy").format(
             configs.n_j, configs.n_m, configs.instance_nums,configs.np_seed_validation
         )
