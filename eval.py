@@ -86,7 +86,7 @@ if __name__ == '__main__':
     )
     ppo = build_ppo(model)
 
-    model_path = "output/j50_m20_seed600/2024-04-26-00-52-41"
+    model_path = "runs/j30_m20_seed600/2024-05-07-18-08-46"
     ppo.policy.load_state_dict(torch.load(os.path.join(model_path, "best.pth"), configs.device), False)
     
     instances_dir = 'visualization/data/instances'
