@@ -74,6 +74,7 @@ def evaluation(dataset=r'visualization/data/instances/Ta61_F.txt', ppo=None, ren
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--instance', type=str, default='visualization/data/instances')
+    parser.add_argument('--model_path', type=str, default=None)
     args = parser.parse_args()
     
     model = ActorCritic(
