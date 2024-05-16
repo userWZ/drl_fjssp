@@ -15,7 +15,7 @@ from jssp_tool.rl.agent.ppo.ppo_discrete import PPODiscrete
 import pandas as pd
 import argparse
 
-configs.device = torch.device(configs.device if torch.cuda.is_available() else "cpu")
+configs.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 def build_ppo(model):
@@ -72,10 +72,7 @@ def evaluation(dataset=r'visualization/data/instances/Ta61_F.txt', ppo=None, ren
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--instance', type=str, default='visualization/data/instances')
-    parser.add_argument('--model_path', type=str, default=None)
-    args = parser.parse_args()
+
     
     model = ActorCritic(
         n_j=configs.n_j,
@@ -92,19 +89,19 @@ if __name__ == '__main__':
         device=configs.device,
     )
     ppo = build_ppo(model)
+    print(configs.eval_model_path,)
+    ppo.policy.load_state_dict(torch.load(os.path.join(configs.eval_model_path, "best.pth"), configs.device), False)
     
-    ppo.policy.load_state_dict(torch.load(os.path.join(args.model_path, "best.pth"), configs.device), False)
-
-    instances = os.listdir(args.instance)
+    instances = os.listdir(configs.instance)
     results = []
     for instance in instances:
-        instance_path = os.path.join(args.instance, instance)
+        instance_path = os.path.join(configs.instance, instance)
         makespan = evaluation(dataset=instance_path, ppo=ppo)
         results.append([instance, makespan])
         print(instance, makespan)
 
     df_results = pd.DataFrame(results, columns=['Instance', 'Makespan'])
-    df_results.to_csv(os.path.join(args.model_path, 'results.csv'), index=False)
+    df_results.to_csv(os.path.join(configs.model_path, 'results.csv'), index=False)
 
 
 

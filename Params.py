@@ -63,6 +63,8 @@ parser.add_argument("--save_frequency", type=int, default=10000, help="frequency
 parser.add_argument("--log_dir", type=str, default="runs/", help="root path of log dir")
 parser.add_argument("--instance_nums", type=int, default=50, help="number of instances for validation")
 parser.add_argument("--output_prefix", type=str, default='', help="prefix of output dir")
+parser.add_argument('--instance', type=str, default='visualization/data/instances')
+parser.add_argument('--eval_model_path', type=str, default=None)
 configs = parser.parse_args()
 run_time = datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
 output_prefix = "j{}_m{}_seed{}".format(configs.n_j, configs.n_m, configs.torch_seed)
