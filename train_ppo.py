@@ -14,7 +14,7 @@ from jssp_tool.rl.agent.ppo.ppo_discrete import PPODiscrete
 from env.utils import gen_and_save
 import json
 
-configs.device = torch.device(configs.device if torch.cuda.is_available() else "cpu")
+configs.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 def build_ppo(model):
