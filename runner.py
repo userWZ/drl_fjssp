@@ -93,7 +93,7 @@ class Runner:
                 best_result = self.test(self.vali_data, agent, best_result, i_update)
 
             if (i_update + 1) % self.configs.save_frequency == 0:
-                torch.save(agent.policy.state_dict(), os.path.join(self.model_dir, "episode_{}.pth".format(i_update)))
+                torch.save(agent.policy.state_dict(), os.path.join(self.model_dir, "episode_{}.pth".format(i_update + 1)))
 
     def test(self, vali_data, ppo, best_result, i_update, phase="val"):
         make_spans = []
@@ -131,7 +131,7 @@ class Runner:
 
         avg_makespan = np.mean(make_spans)
         if avg_makespan < best_result:
-            torch.save(ppo.policy.state_dict(), os.path.join(self.configs.output, "best.pth"))
+            torch.save(ppo.policy.state_dict(), os.path.join(self.configs.output, "episode_{}_best.pth".format(i_update + 1)))
             best_result = avg_makespan
         logger.info("i_update: {}, 测试平均制造周期：{}".format(i_update, avg_makespan))
         self.writer.add_scalar(phase + "/平均制造周期", avg_makespan, i_update)
