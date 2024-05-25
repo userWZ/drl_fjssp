@@ -1,8 +1,8 @@
 #!/bin/bash
 cd ..
-n_j=\$1
-n_m=\$2
-continue_model_dir=\$3
+n_j=$1
+n_m=$2
+continue_model_dir=$3
 
 if [ -z "${continue_model_dir}" ]; then
     # continue_model_dir为空或未设定
