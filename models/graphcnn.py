@@ -97,7 +97,7 @@ class GraphCNN(nn.Module):
         return h
 
     def forward(self, x, graph_pool, adj):
-
+        # 每个图的所有节点特征聚合到一个向量中的结果。
         graph_pool = graph_pool
 
         # list of hidden representation at each layer (including input)

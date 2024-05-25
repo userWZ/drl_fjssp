@@ -75,6 +75,9 @@ def main():
         # 测试
         runner.test(vali_data, ppo, float("inf"), 0, phase="test")
     else:
+        if configs.continue_model_path is not None:
+            print("continue training")
+            ppo.policy.load_state_dict(torch.load(configs.continue_model_path, configs.device), False)
         configs.device = str(configs.device)
         with open(os.path.join(configs.output, "config.json"), 'w') as f:
             json.dump(vars(configs), f, indent=4)

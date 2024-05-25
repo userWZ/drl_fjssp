@@ -1,6 +1,8 @@
 import argparse
 import datetime
 import os
+import json
+    
 parser = argparse.ArgumentParser(description="Arguments for ppo_fjssp")
 # args for device
 parser.add_argument("--device", type=str, default="cuda:0,1,2,3", help="Number of jobs of instances")
@@ -41,7 +43,7 @@ parser.add_argument("--hidden_dim_actor", type=int, default=32, help="hidden dim
 parser.add_argument("--num_mlp_layers_critic", type=int, default=2, help="No. of layers in critic MLP")
 parser.add_argument("--hidden_dim_critic", type=int, default=32, help="hidden dim of MLP in critic")
 # args for PPO
-parser.add_argument("--num_envs", type=int, default=4, help="No. of envs for training")
+parser.add_argument("--num_envs", type=int, default=1, help="No. of envs for training")
 parser.add_argument("--max_updates", type=int, default=100000, help="No. of episodes of each env for training")
 parser.add_argument("--lr", type=float, default=2e-5, help="lr")
 parser.add_argument("--decayflag", type=bool, default=False, help="lr decayflag")
@@ -58,15 +60,34 @@ parser.add_argument("--entloss_coef", type=float, default=0.01, help="entropy lo
 parser.add_argument("--test", action="store_true", default=False, help="是否执行测试，否-训练")
 parser.add_argument("--output", type=str, default="output/", help="root path of output dir")
 parser.add_argument("--model_dir", type=str, default="model", help="folder path to save/load neural network models")
+parser.add_argument("--continue_model_path", type=str, default=None, help="path of model to continue training")
+# parser.add_argument("--continue_model_path", type=str, default=".\\output\\j30_m20_seed600\\2024-05-25-19-43-08\\model\\episode_0.pth", help="path of model to continue training")
 parser.add_argument("--val_frequency", type=int, default=100, help="frequency for validation")
-parser.add_argument("--save_frequency", type=int, default=10000, help="frequency for validation")
+parser.add_argument("--save_frequency", type=int, default=1, help="frequency for save")
 parser.add_argument("--log_dir", type=str, default="runs/", help="root path of log dir")
 parser.add_argument("--instance_nums", type=int, default=50, help="number of instances for validation")
 parser.add_argument("--output_prefix", type=str, default='', help="prefix of output dir")
 parser.add_argument('--instance', type=str, default='visualization/data/instances')
 parser.add_argument('--eval_model_path', type=str, default=None)
 configs = parser.parse_args()
+
 run_time = datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
+
+
+if configs.continue_model_path is not None:
+    if not os.path.exists(configs.continue_model_path):
+        raise ValueError("continue_model_path is not valid")
+    
+    model_dir = os.path.dirname(configs.continue_model_path)
+    base_dir = os.path.dirname(model_dir)
+    config_path = os.path.join(base_dir, "config.json")
+    
+    # 从 config.json 文件中读取超参数
+    with open(config_path, 'r') as f:
+        config = json.load(f)
+    run_time = os.path.basename(base_dir) + "_continued"
+    
+
 output_prefix = "j{}_m{}_seed{}".format(configs.n_j, configs.n_m, configs.torch_seed)
 configs.output = os.path.join(configs.output, output_prefix, run_time)
 configs.output_prefix = output_prefix
