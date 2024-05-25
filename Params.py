@@ -85,7 +85,7 @@ if configs.continue_model_path is not None:
     # 从 config.json 文件中读取超参数
     with open(config_path, 'r') as f:
         config = json.load(f)
-    run_time = os.path.basename(base_dir) + os.path.basename(configs.continue_model_path).replace(".pth", "") +  "_continued"
+    run_time = os.path.basename(base_dir) + '_' + os.path.basename(configs.continue_model_path).replace(".pth", "") +  "_continued"
     
 
 output_prefix = "j{}_m{}_seed{}".format(configs.n_j, configs.n_m, configs.torch_seed)
