@@ -29,7 +29,7 @@ class Runner:
         self.device = configs.device
         self.log_dir = os.path.join(configs.log_dir)
         os.makedirs(self.log_dir, exist_ok=True)
-        self.writer = SummaryWriter(logdir=self.log_dir)
+        self.writer = SummaryWriter(logdir=configs.output)
         self.gamma = configs.gamma
 
     def to_tensor(self, adj, fea, candidate, mask):

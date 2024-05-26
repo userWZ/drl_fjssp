@@ -5,7 +5,7 @@ import sys
 
 sys.path.append(".")
 from env.fjssp_env import FjsspEnv
-from Params import configs
+from Params import setting_params
 import global_util
 from models.actor_critic import ActorCritic
 from runner import Runner
@@ -14,6 +14,7 @@ from jssp_tool.rl.agent.ppo.ppo_discrete import PPODiscrete
 from env.utils import gen_and_save
 import json
 
+configs = setting_params()
 configs.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
@@ -75,7 +76,7 @@ def main():
         # 测试
         runner.test(vali_data, ppo, float("inf"), 0, phase="test")
     else:
-        if configs.continued:
+        if configs.continue_model_path:
             print("continue training")
             ppo.policy.load_state_dict(torch.load(configs.continue_model_path, configs.device), False)
         configs.device = str(configs.device)
