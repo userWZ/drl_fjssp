@@ -69,8 +69,9 @@ def setting_params():
     parser.add_argument("--log_dir", type=str, default="runs/", help="root path of log dir")
     parser.add_argument("--instance_nums", type=int, default=50, help="number of instances for validation")
     parser.add_argument("--output_prefix", type=str, default='', help="prefix of output dir")
-    parser.add_argument('--instance', type=str, default='visualization/data/instances')
-    parser.add_argument('--eval_model_path', type=str, default=None)
+    parser.add_argument('--instance', type=str, default='visualization/data')
+    parser.add_argument('--render', type=bool, default=True)
+    parser.add_argument('--eval_model_path', type=str, default='output/j10_m10_seed600/2024-05-16-23-20-49/best.pth')
     configs = parser.parse_args()
 
     run_time = datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
@@ -82,7 +83,7 @@ def setting_params():
         
         model_dir = os.path.dirname(configs.continue_model_path)
         base_dir = os.path.dirname(model_dir)
-        if os.path.basename(configs.continue_model_path) == "best.pth":
+        if os.path.basename(configs.continue_model_path).endswith("best.pth"):
             base_dir = model_dir
         
         config_path = os.path.join(base_dir, "config.json")

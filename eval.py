@@ -6,15 +6,15 @@ import torch
 import numpy as np
 import global_util
 from env.fjssp_env import FjsspEnv
-from Params import configs
+from Params import setting_params
 from visualization.visual import *
 from visualization.utils import read_dataset
 from result_generator import to_dataframe
 from models.actor_critic import ActorCritic
 from jssp_tool.rl.agent.ppo.ppo_discrete import PPODiscrete
 import pandas as pd
-import argparse
 
+configs = setting_params()
 configs.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
@@ -38,8 +38,9 @@ def to_tensor(adj, fea, candidate, mask):
         mask_tensor = torch.from_numpy(np.copy(mask)).to(configs.device).unsqueeze(0)
         return adj_tensor, fea_tensor, candidate_tensor, mask_tensor
     
-def evaluation(dataset=r'visualization/data/instances/Ta61_F.txt', ppo=None, render=False):
-    processing_time = read_dataset(dataset)
+def evaluation(instance, ppo=None, render=False, save=True):
+    instance_path = os.path.join(configs.instance, instance)
+    processing_time = read_dataset(instance_path)
     # 假设你的三维列表名为three_dimensional_list
     # 创建四个空的二维列表，分别用于存放包含a、b、c、d的元素
     machine = np.array([[item[0] - 1 for item in sublist] for sublist in processing_time])
@@ -67,7 +68,11 @@ def evaluation(dataset=r'visualization/data/instances/Ta61_F.txt', ppo=None, ren
     # print(makespan)
     if render:
         df_schedule = to_dataframe(env.task_durations, env.task_machines, env.low_bounds)
-        draw_fuzzy_gantt_from_df(df_schedule, env.n_m)
+        if save: 
+            save_url = instance
+            draw_fuzzy_gantt_from_df(df_schedule, env.n_m, save_url)
+        else:
+            draw_fuzzy_gantt_from_df(df_schedule, env.n_m)
     return makespan
 
 
@@ -89,19 +94,19 @@ if __name__ == '__main__':
         device=configs.device,
     )
     ppo = build_ppo(model)
-    print(configs.eval_model_path,)
-    ppo.policy.load_state_dict(torch.load(os.path.join(configs.eval_model_path, "best.pth"), configs.device), False)
+    ppo.policy.load_state_dict(torch.load(configs.eval_model_path, configs.device), False)
     
     instances = os.listdir(configs.instance)
     results = []
     for instance in instances:
-        instance_path = os.path.join(configs.instance, instance)
-        makespan = evaluation(dataset=instance_path, ppo=ppo)
+        print('====%s eval begin===='%instance)
+        
+        makespan = evaluation(instance=instance, ppo=ppo, render=configs.render)
         results.append([instance, makespan])
         print(instance, makespan)
 
     df_results = pd.DataFrame(results, columns=['Instance', 'Makespan'])
-    df_results.to_csv(os.path.join(configs.model_path, 'results.csv'), index=False)
+    # df_results.to_csv(os.path.join(configs.model_path, 'results.csv'), index=False)
 
 
 
