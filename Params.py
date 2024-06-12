@@ -72,6 +72,7 @@ def setting_params():
     parser.add_argument('--instance', type=str, default='visualization/data')
     parser.add_argument('--render', type=bool, default=True)
     parser.add_argument('--eval_model_path', type=str, default='output/j10_m10_seed600/2024-05-16-23-20-49/best.pth')
+    parser.add_argument('--eval_save_path', type=str, default='')
     configs = parser.parse_args()
 
     run_time = datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
@@ -92,6 +93,16 @@ def setting_params():
         with open(config_path, 'r') as f:
             config = json.load(f)
         run_time = os.path.basename(base_dir) + '_' + os.path.basename(configs.continue_model_path).replace(".pth", "") +  "_continued"
+    
+    if configs.eval_model_path is not None:
+        if not os.path.exists(configs.eval_model_path):
+            raise ValueError("eval_model_path is not valid")
+        
+        # 根据 eval_model_path 生成 eval_save_path
+        eval_save_path = configs.eval_model_path.replace("output", "result")
+        eval_save_path, _ = os.path.splitext(eval_save_path)
+        configs.eval_save_path = eval_save_path
+        
         
 
     output_prefix = "j{}_m{}_seed{}".format(configs.n_j, configs.n_m, configs.torch_seed)

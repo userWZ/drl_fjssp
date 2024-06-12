@@ -77,8 +77,6 @@ def evaluation(instance, ppo=None, render=False, save=True):
 
 
 if __name__ == '__main__':
-
-    
     model = ActorCritic(
         n_j=configs.n_j,
         n_m=configs.n_m,
@@ -100,13 +98,12 @@ if __name__ == '__main__':
     results = []
     for instance in instances:
         print('====%s eval begin===='%instance)
-        
         makespan = evaluation(instance=instance, ppo=ppo, render=configs.render)
         results.append([instance, makespan])
         print(instance, makespan)
 
     df_results = pd.DataFrame(results, columns=['Instance', 'Makespan'])
-    # df_results.to_csv(os.path.join(configs.model_path, 'results.csv'), index=False)
+    df_results.to_csv(os.path.join(configs.eval_save_path, 'model_j{j}_m{m}_results.csv'.format(j=configs.n_j, m=configs.n_m)), index=False)
 
 
 
