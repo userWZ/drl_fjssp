@@ -3,6 +3,7 @@ import pickle
 import random
 
 import torch
+import time
 import numpy as np
 import global_util
 from env.fjssp_env import FjsspEnv
@@ -38,12 +39,12 @@ def to_tensor(adj, fea, candidate, mask):
         mask_tensor = torch.from_numpy(np.copy(mask)).to(configs.device).unsqueeze(0)
         return adj_tensor, fea_tensor, candidate_tensor, mask_tensor
     
-def evaluation(instance, ppo=None, render=False, save=True):
+def evaluation(instance, ppo=None, render=True, save=True):
     instance_path = os.path.join(configs.instance, instance)
     processing_time = read_dataset(instance_path)
     # 假设你的三维列表名为three_dimensional_list
     # 创建四个空的二维列表，分别用于存放包含a、b、c、d的元素
-    machine = np.array([[item[0] - 1 for item in sublist] for sublist in processing_time])
+    machine = np.array([[item[0] for item in sublist] for sublist in processing_time])
     op_left = np.array([[item[1] for item in sublist] for sublist in processing_time])
     op_peak = np.array([[item[2] for item in sublist] for sublist in processing_time])
     op_right = np.array([[item[3] for item in sublist] for sublist in processing_time])
@@ -67,16 +68,20 @@ def evaluation(instance, ppo=None, render=False, save=True):
     makespan = env.cur_make_span
     # print(makespan)
     if render:
+        if env.n_j > 10:
+            print('[Render faild]: OUT of color bound, instance have too many jobs.')
+            return makespan
         df_schedule = to_dataframe(env.task_durations, env.task_machines, env.low_bounds)
         if save: 
-            save_url = instance
+            save_url = os.path.join(configs.eval_save_path, instance + '.png')
+            # save_url = instance
             draw_fuzzy_gantt_from_df(df_schedule, env.n_m, save_url)
         else:
             draw_fuzzy_gantt_from_df(df_schedule, env.n_m)
     return makespan
 
 
-if __name__ == '__main__':
+
     model = ActorCritic(
         n_j=configs.n_j,
         n_m=configs.n_m,
@@ -98,11 +103,14 @@ if __name__ == '__main__':
     results = []
     for instance in instances:
         print('====%s eval begin===='%instance)
+        time_start = time.time()
         makespan = evaluation(instance=instance, ppo=ppo, render=configs.render)
-        results.append([instance, makespan])
-        print(instance, makespan)
+        time_end = time.time()
+        time_sum = time_end - time_start
+        results.append([instance, makespan, time_sum])
+        print(instance, makespan, time_sum)
 
-    df_results = pd.DataFrame(results, columns=['Instance', 'Makespan'])
+    df_results = pd.DataFrame(results, columns=['Instance', 'Makespan', 'Time'])
     df_results.to_csv(os.path.join(configs.eval_save_path, 'model_j{j}_m{m}_results.csv'.format(j=configs.n_j, m=configs.n_m)), index=False)
 
 

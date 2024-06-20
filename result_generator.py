@@ -5,7 +5,7 @@ def to_dataframe(task_durations, task_machines, task_finish_times):
     df_gantt = pd.DataFrame(columns=["Job", "Operation", "Machine",
                                      "start_time_left", "start_time_peak", "start_time_right"
                                      "end_time_left", "end_time_peak", "end_time_right"])
-
+    
     for i in range(len(task_durations["left"])):
         for j in range(len(task_durations["left"][i])):
             df = pd.DataFrame(

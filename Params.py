@@ -62,14 +62,14 @@ def setting_params():
     parser.add_argument("--test", action="store_true", default=False, help="是否执行测试，否-训练")
     parser.add_argument("--output", type=str, default="output/", help="root path of output dir")
     parser.add_argument("--model_dir", type=str, default="model", help="folder path to save/load neural network models")
-    parser.add_argument("--continue_model_path", type=str, default=None, help="path of model to continue training")
-    # parser.add_argument("--continue_model_path", type=str, default="output/j16_m16_seed600/2024-05-20-14-55-53/best.pth", help="path of model to continue training")
+    # parser.add_argument("--continue_model_path", type=str, default=None, help="path of model to continue training")
+    parser.add_argument("--continue_model_path", type=str, default="output/j16_m16_seed600/2024-05-20-14-55-53/best.pth", help="path of model to continue training")
     parser.add_argument("--val_frequency", type=int, default=100, help="frequency for validation")
     parser.add_argument("--save_frequency", type=int, default=50, help="frequency for save")
     parser.add_argument("--log_dir", type=str, default="runs/", help="root path of log dir")
     parser.add_argument("--instance_nums", type=int, default=50, help="number of instances for validation")
     parser.add_argument("--output_prefix", type=str, default='', help="prefix of output dir")
-    parser.add_argument('--instance', type=str, default='visualization/data')
+    parser.add_argument('--instance', type=str, default='data/instances')
     parser.add_argument('--render', type=bool, default=True)
     parser.add_argument('--eval_model_path', type=str, default='output/j10_m10_seed600/2024-05-16-23-20-49/best.pth')
     parser.add_argument('--eval_save_path', type=str, default='')
@@ -102,6 +102,8 @@ def setting_params():
         eval_save_path = configs.eval_model_path.replace("output", "result")
         eval_save_path, _ = os.path.splitext(eval_save_path)
         configs.eval_save_path = eval_save_path
+        if not os.path.exists(eval_save_path):
+            os.makedirs(eval_save_path)
         
         
 
