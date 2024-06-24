@@ -81,7 +81,7 @@ def evaluation(instance, ppo=None, render=True, save=True):
     return makespan
 
 
-
+if __name__ == '__main__':
     model = ActorCritic(
         n_j=configs.n_j,
         n_m=configs.n_m,

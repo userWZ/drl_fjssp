@@ -9,7 +9,7 @@ def read_dataset(dataset_url):
         # 获取作业数和机器数
         jobs = int(lines[1].strip())
         machines = int(lines[3].strip())
-            # 初始化矩阵
+        # 初始化矩阵
         sequence_matrix = []
         duration_matrix = []
         # 读取序列矩阵
