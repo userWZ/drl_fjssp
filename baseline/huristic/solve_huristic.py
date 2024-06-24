@@ -4,7 +4,9 @@ from job_shop_lib import JobShopInstance, Operation
 from job_shop_lib.dispatching import (
     DispatchingRuleSolver,
     DispatchingRule,
+    Dispatcher
 )
+
 import re
 import pandas as pd
 import os
@@ -41,7 +43,7 @@ def parse_file(dataset_url: str) -> JobShopInstance:
     for i in range(num_jobs):
         fuzzyOperations = []
         for j in range(num_machine):
-            expect_duration = (sum(fuzzy_durations[i][j]) + fuzzy_durations[i][j][1] )// 4
+            expect_duration = (sum(fuzzy_durations[i][j]) + fuzzy_durations[i][j][1] ) / 4
             operation = fuzzyOperation(machine=machines[i][j], duration=expect_duration, fuzzy_duration=fuzzy_durations[i][j])
             fuzzyOperations.append(operation)
         jobs.append(fuzzyOperations)
@@ -49,6 +51,32 @@ def parse_file(dataset_url: str) -> JobShopInstance:
     return jobs
 
 
+def longest_processing_time_rule(dispatcher: Dispatcher) -> Operation:
+    """Dispatches the operation with the longest duration."""
+    return max(
+        dispatcher.available_operations(),
+        key=lambda operation: operation.duration,
+    )
+
+def last_in_first_out_rule(dispatcher: Dispatcher) -> Operation:
+    """Dispatches the last arrived operation."""
+    return max(
+        dispatcher.available_operations(),
+        key=lambda operation: operation.position_in_job,
+    )
+
+
+def least_operations_remaining_rule(dispatcher: Dispatcher) -> Operation:
+    """Dispatches the operation which job has the least remaining operations."""
+    job_remaining_operations = [0] * dispatcher.instance.num_jobs
+    for operation in dispatcher.uncompleted_operations():
+        job_remaining_operations[operation.job_id] += 1
+
+    return min(
+        dispatcher.available_operations(),
+        key=lambda operation: job_remaining_operations[operation.job_id],
+    )
+    
 if __name__ == "__main__":
 
     instances = os.listdir("instances")
@@ -59,12 +87,22 @@ if __name__ == "__main__":
     # MOST_OPERATIONS_REMAINING = "most_operations_remaining"
     # RANDOM = "random"
     
-    DispatchingRule = 'MOST_OPERATIONS_REMAINING'
+    DispatchingRule = 'random'
     for instance in instances:
         instance_url = os.path.join("instances", instance)
         jobs = parse_file(instance_url)
         instance = JobShopInstance(jobs, name=instance)
-        solver = DispatchingRuleSolver(dispatching_rule=DispatchingRule)
+        if DispatchingRule == 'least_operations_remaining':
+            solver = DispatchingRuleSolver(dispatching_rule=least_operations_remaining_rule)
+        elif DispatchingRule == 'longest_processing_time':
+            solver = DispatchingRuleSolver(dispatching_rule=longest_processing_time_rule)
+        elif DispatchingRule == 'last_in_first_out':
+            solver = DispatchingRuleSolver(dispatching_rule=last_in_first_out_rule)
+        else:
+            solver = DispatchingRuleSolver(dispatching_rule=DispatchingRule)
+        
+         
+        # solver = DispatchingRuleSolver(dispatching_rule=least_operations_remaining_rule)
         schedule = solver(instance)
         makespan = schedule.makespan()
         result.append([instance, makespan])
