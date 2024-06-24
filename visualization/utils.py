@@ -9,7 +9,7 @@ def read_dataset(dataset_url):
         # 获取作业数和机器数
         jobs = int(lines[1].strip())
         machines = int(lines[3].strip())
-        # 初始化矩阵
+            # 初始化矩阵
         sequence_matrix = []
         duration_matrix = []
         # 读取序列矩阵
@@ -26,10 +26,12 @@ def read_dataset(dataset_url):
         for row in range(len(duration_matrix)):
             for col in range(len(duration_matrix[0])):
                 duration_matrix[row][col].insert(0, sequence_matrix[row][col])
-        return duration_matrix
+        return jobs, machines, duration_matrix
         
     with open(dataset_url, 'r') as file:
         processing_time = []
+        jobs = len(file)
+        machines = -1
         # 逐行读取文件内容
         for line in file:
             # 去除每行末尾的换行符，并按空格分割成数字列表
@@ -37,8 +39,9 @@ def read_dataset(dataset_url):
 
             # 每四个数字为一组，将每行的数字列表分割成若干个四个数字的小组
             groups = [list(map(int, numbers[i:i + 4])) for i in range(0, len(numbers), 4)]
+            machines = len(groups)
             processing_time.append(groups)
-    return processing_time
+    return jobs, machines, processing_time
 
 def read_solution(solution_url):
     with open(solution_url, 'r') as file:

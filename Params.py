@@ -70,7 +70,7 @@ def setting_params():
     parser.add_argument("--instance_nums", type=int, default=50, help="number of instances for validation")
     parser.add_argument("--output_prefix", type=str, default='', help="prefix of output dir")
     parser.add_argument('--instance', type=str, default='data/instances')
-    parser.add_argument('--render', type=bool, default=True)
+    parser.add_argument('--render', type=bool, default=False)
     parser.add_argument('--eval_model_path', type=str, default='output/j10_m10_seed600/2024-05-16-23-20-49/best.pth')
     parser.add_argument('--eval_save_path', type=str, default='')
     configs = parser.parse_args()
