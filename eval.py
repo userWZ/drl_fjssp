@@ -41,7 +41,7 @@ def to_tensor(adj, fea, candidate, mask):
     
 def evaluation(instance, ppo=None, render=True, save=True):
     instance_path = os.path.join(configs.instance, instance)
-    processing_time = read_dataset(instance_path)
+    jobs, machines, processing_time = read_dataset(instance_path)
     # 假设你的三维列表名为three_dimensional_list
     # 创建四个空的二维列表，分别用于存放包含a、b、c、d的元素
     machine = np.array([[item[0] for item in sublist] for sublist in processing_time])
@@ -82,6 +82,7 @@ def evaluation(instance, ppo=None, render=True, save=True):
 
 
 if __name__ == '__main__':
+
     model = ActorCritic(
         n_j=configs.n_j,
         n_m=configs.n_m,

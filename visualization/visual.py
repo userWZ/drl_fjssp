@@ -35,7 +35,10 @@ def draw_fuzzy_gantt_from_df(df, machine_nb, save_url=''):
     for machine_idx in range(1, machine_nb + 1):
         y = machine_idx
         plt.axhline(y, color='black')  # 绘制水平线，表示机器
-    plt.yticks(list(range(1, machine_nb + 1)))  # 设置y轴刻度
+    plt.yticks(list(range(1, machine_nb + 1)), fontsize=18)  # 设置y轴刻度
+    plt.xticks(fontsize=18)  # 设置y轴刻度
+    # plt.xlabel('time',fontsize=18)
+    # plt.ylabel('machine',fontsize=18)
     for index, row in df.iterrows():
         machine_idx = int(row['Machine'])
         start = [row['start_left'], row['start_peak'], row['start_right']]
@@ -45,8 +48,8 @@ def draw_fuzzy_gantt_from_df(df, machine_nb, save_url=''):
         y = machine_idx + 1
         if start == [0, 0, 0]:
             plt.scatter(0, y, color=colors[job_idx])  # 绘制起始点
-            plt.text(start[1], y-0.2, str(job_idx)+','+str(task_idx), verticalalignment='center', horizontalalignment='center',
-                     fontsize=8)  # 在起始点添加文本标签
+            # plt.text(start[1], y-0.2, str(job_idx)+','+str(task_idx), verticalalignment='center', horizontalalignment='center',
+            #          fontsize=12)  # 在起始点添加文本标签
         else:
             if start[0] > start[1] or start[1] > start[2] or start[0] > start[2]:
                 print('error') 
@@ -54,12 +57,12 @@ def draw_fuzzy_gantt_from_df(df, machine_nb, save_url=''):
             triangleX = start
             triangleY = [y, y-0.2, y]
             plt.fill(triangleX, triangleY, colors[job_idx])  # 绘制起始时间的三角形
-            plt.text(start[1], y-0.3, str(job_idx)+','+str(task_idx), verticalalignment='center', horizontalalignment='center',
-                     fontsize=8)  # 在起始时间的三角形上添加文本标签
+            # plt.text(start[1], y-0.3, str(job_idx)+','+str(task_idx), verticalalignment='center', horizontalalignment='center',
+            #          fontsize=12)  # 在起始时间的三角形上添加文本标签
         triangleX = end
         triangleY = [y, y+0.2, y]
         plt.fill(triangleX, triangleY, colors[job_idx])  # 绘制结束时间的三角形
-        plt.text(end[1], y+0.3, str(job_idx)+','+str(task_idx), verticalalignment='center', horizontalalignment='center', fontsize=8)  # 在结束时间的三角形上添加文本标签
+        # plt.text(end[1], y+0.3, str(job_idx)+','+str(task_idx), verticalalignment='center', horizontalalignment='center', fontsize=12)  # 在结束时间的三角形上添加文本标签
     plt.show()
     if save_url:
         plt.savefig(save_url)
