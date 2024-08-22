@@ -3,8 +3,8 @@ import pandas as pd
 
 def to_dataframe(task_durations, task_machines, task_finish_times):
     df_gantt = pd.DataFrame(columns=["Job", "Operation", "Machine",
-                                     "start_time_left", "start_time_peak", "start_time_right"
-                                     "end_time_left", "end_time_peak", "end_time_right"])
+                                     "start_left", "start_peak", "start_right"
+                                     "end_left", "end_peak", "end_right"])
     
     for i in range(len(task_durations["left"])):
         for j in range(len(task_durations["left"][i])):
