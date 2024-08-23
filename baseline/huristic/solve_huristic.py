@@ -6,7 +6,7 @@ from job_shop_lib.dispatching import (
     DispatchingRule,
     Dispatcher
 )
-
+import time 
 import re
 import pandas as pd
 import os
@@ -89,6 +89,7 @@ if __name__ == "__main__":
     
     DispatchingRule = 'random'
     for instance in instances:
+        start_time = time.time()
         instance_url = os.path.join("instances", instance)
         jobs = parse_file(instance_url)
         instance = JobShopInstance(jobs, name=instance)
@@ -101,12 +102,13 @@ if __name__ == "__main__":
         else:
             solver = DispatchingRuleSolver(dispatching_rule=DispatchingRule)
         
-         
+        read_time = time.time()
         # solver = DispatchingRuleSolver(dispatching_rule=least_operations_remaining_rule)
         schedule = solver(instance)
+        end_time = time.time()
         makespan = schedule.makespan()
-        result.append([instance, makespan])
+        result.append([instance, makespan, end_time - read_time, end_time - start_time])
         print(f"Instance {instance.name} has makespan {makespan}")
 
-    df_results = pd.DataFrame(result, columns=['Instance', 'Makespan'])
+    df_results = pd.DataFrame(result, columns=['Instance', 'Makespan', 'all_time', 'solve_time'])
     df_results.to_csv('baseline/huristic/{}.csv'.format(DispatchingRule), index=False)

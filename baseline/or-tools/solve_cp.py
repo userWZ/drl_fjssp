@@ -2,12 +2,12 @@ from ortools.sat.python import cp_model
 import pandas as pd
 import sys
 import os
-sys.path.append('D:\\drl_fjssp')
-from visualization.utils import read_dataset
-from visualization.visual import draw_fuzzy_gantt_from_df
+# sys.path.append('DRL_FJSSP')
+from utils import read_dataset
+# from visualization.visual import draw_fuzzy_gantt_from_df
+import time
 
-
-time_limit_seconds = 1800
+time_limit_seconds = 600
 
 def create_cp_model(num_machines, jobs_data):
     model = cp_model.CpModel()
@@ -74,10 +74,9 @@ def solve_cp_model(num_machines, jobs_data):
     
     status = solver.Solve(model)
     print(f'Status: {solver.StatusName(status)}')
-   
+    min_makespan = solver.Value(makespan)
     if status == cp_model.OPTIMAL or status == cp_model.FEASIBLE:
         print(f'Minimal makespan: {solver.Value(makespan)}')
-        
         # 创建DataFrame
         df_gantt = pd.DataFrame(columns=["Job", "Operation", "Machine",
                                          "start_left", "start_peak", "start_right",
@@ -103,24 +102,40 @@ def solve_cp_model(num_machines, jobs_data):
                     "end_right": [end_right]
                 })
                 df_gantt = pd.concat([df_gantt, new_row], ignore_index=True)
-
+        
         # print(df_gantt)
     else:
         print('No solution found.')
-    return df_gantt
+    return min_makespan, df_gantt
 
-# 读取数据集
-num_jobs, num_machines, processing_time = read_dataset("D:\drl_fjssp\instances\Ta80_F.txt")
+if __name__ == "__main__":
+    
+    instances = os.listdir("instances")
+    result = []
+    for instance in instances:
+        start_time = time.time()
+        instance_url = os.path.join("instances", instance)
+        
+        # 读取数据集
+        num_jobs, num_machines, processing_time = read_dataset(instance_url)
+        read_time = time.time()
+        # 处理数据集
+        machine = [[item[0] for item in sublist] for sublist in processing_time]
+        op = [[item[1:] for item in sublist] for sublist in processing_time]
+        jobs_data = [[(machine[i][j], op[i][j]) for j in range(len(machine[i]))] for i in range(len(machine))]
 
-# 处理数据集
-machine = [[item[0] for item in sublist] for sublist in processing_time]
-op = [[item[1:] for item in sublist] for sublist in processing_time]
-jobs_data = [[(machine[i][j], op[i][j]) for j in range(len(machine[i]))] for i in range(len(machine))]
+        # 求解
+        makespan, resolution = solve_cp_model(num_machines, jobs_data)
+        end_time = time.time()
+        result.append([instance, makespan, end_time - start_time, end_time - read_time,])
+        # print(f"Instance {instance} has makespan {makespan}")
+        # print(makespan)
+        # if num_machines > 10:
+        #     print('[Render faild]: OUT of color bound, instance have too many jobs.')
+        #     # sys.exit(0)
+        # # 绘制甘特图
+        # draw_fuzzy_gantt_from_df(resolution, num_machines)
 
-# 求解
-resolution = solve_cp_model(num_machines, jobs_data)
-if num_machines > 10:
-    print('[Render faild]: OUT of color bound, instance have too many jobs.')
-    sys.exit(0)
-# 绘制甘特图
-draw_fuzzy_gantt_from_df(resolution, num_machines)
+        
+    df_results = pd.DataFrame(result, columns=['Instance', 'Makespan', 'all_time', 'solve_time'])
+    df_results.to_csv('baseline/or-tools/or-tools.csv', index=False)
