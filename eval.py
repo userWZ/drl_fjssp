@@ -39,22 +39,14 @@ def to_tensor(adj, fea, candidate, mask):
         mask_tensor = torch.from_numpy(np.copy(mask)).to(configs.device).unsqueeze(0)
         return adj_tensor, fea_tensor, candidate_tensor, mask_tensor
     
-def evaluation(instance, ppo=None, render=True, save=True):
-    instance_path = os.path.join(configs.instance, instance)
-    jobs, machines, processing_time = read_dataset(instance_path)
-    # 假设你的三维列表名为three_dimensional_list
-    # 创建四个空的二维列表，分别用于存放包含a、b、c、d的元素
-    machine = np.array([[item[0] for item in sublist] for sublist in processing_time])
-    op_left = np.array([[item[1] for item in sublist] for sublist in processing_time])
-    op_peak = np.array([[item[2] for item in sublist] for sublist in processing_time])
-    op_right = np.array([[item[3] for item in sublist] for sublist in processing_time])
+def evaluation(ppo=None, render=True, save=True):
     
-    data = (op_left, op_peak, op_right, machine)
     env = FjsspEnv(configs.n_j, configs.n_m, configs.low, configs.high, configs.device)
 
     obs, _ = env.reset(data=data)
     reward = 0
     index = 0
+    start_time = time.time()
     while True:
         index = index + 1
         obs = to_tensor(*obs)
@@ -65,12 +57,13 @@ def evaluation(instance, ppo=None, render=True, save=True):
         obs = next_obs
         if done:
             break
+    end_time = time.time()
     makespan = env.cur_make_span
     # print(makespan)
     if render:
         if env.n_j > 10:
             print('[Render faild]: OUT of color bound, instance have too many jobs.')
-            return makespan
+            return makespan, end_time - start_time
         df_schedule = to_dataframe(env.task_durations, env.task_machines, env.low_bounds)
         if save: 
             save_url = os.path.join(configs.eval_save_path, instance + '.png')
@@ -78,7 +71,7 @@ def evaluation(instance, ppo=None, render=True, save=True):
             draw_fuzzy_gantt_from_df(df_schedule, env.n_m, save_url)
         else:
             draw_fuzzy_gantt_from_df(df_schedule, env.n_m)
-    return makespan
+    return makespan, end_time - start_time
 
 
 if __name__ == '__main__':
@@ -100,16 +93,32 @@ if __name__ == '__main__':
     ppo = build_ppo(model)
     ppo.policy.load_state_dict(torch.load(configs.eval_model_path, configs.device), False)
     
-    instances = os.listdir(configs.instance)
     results = []
-    for instance in instances:
-        print('====%s eval begin===='%instance)
-        time_start = time.time()
-        makespan = evaluation(instance=instance, ppo=ppo, render=configs.render)
-        time_end = time.time()
-        time_sum = time_end - time_start
-        results.append([instance, makespan, time_sum])
-        print(instance, makespan, time_sum)
+    # 合成实例
+    if configs.instance_type == 'synthetic':
+        instance_file = os.path.join(configs.instance, 'synthetic', f"synthetic_{configs.n_j}_{configs.n_m}_instanceNums{configs.instance_nums}_Seed{configs.seed}.npy")
+        eval_instances = np.load(instance_file)
+        for instance in eval_instances:
+            
+    else:
+        instances_path = os.path.join(configs.instance, 'benchmark')
+        instances = os.listdir(instances_path)
+        for instance in instances:
+            print('====%s eval begin===='%instance)
+            instance_path = os.path.join(configs.instance, instance)
+            jobs, machines, processing_time = read_dataset(instance_path)
+            # 假设你的三维列表名为three_dimensional_list
+            # 创建四个空的二维列表，分别用于存放包含a、b、c、d的元素
+            machine = np.array([[item[0] for item in sublist] for sublist in processing_time])
+            op_left = np.array([[item[1] for item in sublist] for sublist in processing_time])
+            op_peak = np.array([[item[2] for item in sublist] for sublist in processing_time])
+            op_right = np.array([[item[3] for item in sublist] for sublist in processing_time])
+            
+            data = (op_left, op_peak, op_right, machine)
+            makespan, solve_time = evaluation(instance=instance, ppo=ppo, render=configs.render)
+
+            results.append([instance, makespan, solve_time])
+            print(instance, makespan, solve_time)
 
     df_results = pd.DataFrame(results, columns=['Instance', 'Makespan', 'Time'])
     df_results.to_csv(os.path.join(configs.eval_save_path, 'model_j{j}_m{m}_results.csv'.format(j=configs.n_j, m=configs.n_m)), index=False)

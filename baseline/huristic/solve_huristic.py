@@ -86,8 +86,15 @@ if __name__ == "__main__":
     # MOST_WORK_REMAINING = "most_work_remaining"
     # MOST_OPERATIONS_REMAINING = "most_operations_remaining"
     # RANDOM = "random"
+    spt = 'shortest_processing_time'
+    mwkr = 'most_work_remaining'
+    mor = 'most_operations_remaining'
+    lpt = 'longest_processing_time'
+    lifo = 'last_in_first_out'
+    lor = 'least_operations_remaining'
+    fifo = 'first_come_first_served'
     
-    DispatchingRule = 'random'
+    DispatchingRule = 'shortest_processing_time'
     for instance in instances:
         start_time = time.time()
         instance_url = os.path.join("instances", instance)
@@ -108,7 +115,7 @@ if __name__ == "__main__":
         end_time = time.time()
         makespan = schedule.makespan()
         result.append([instance, makespan, end_time - read_time, end_time - start_time])
-        print(f"Instance {instance.name} has makespan {makespan}")
+        print(f"Instance {instance.name} has makespan {makespan}, ", end_time - start_time, end_time - read_time)
 
     df_results = pd.DataFrame(result, columns=['Instance', 'Makespan', 'all_time', 'solve_time'])
     df_results.to_csv('baseline/huristic/{}.csv'.format(DispatchingRule), index=False)

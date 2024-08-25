@@ -1,8 +1,8 @@
-
+NUMERO DE TRABAJOS
 10
-
+NUMERO DE RECURSOS
 10
-
+Matriz de operaciones
 6 8 1 4 3 0 5 2 7 9
 9 2 4 3 7 0 1 6 5 8
 4 6 3 2 0 7 5 1 8 9

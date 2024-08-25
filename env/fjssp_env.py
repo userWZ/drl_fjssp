@@ -141,7 +141,7 @@ class FjsspEnv(BaseEnv):
 
         return obs, info
 
-    def step(self, task_id: int) -> Tuple[ObsType, float, bool, bool, dict]:
+    def step(self, task_id: int) -> Tuple[ObsType, float, bool, bool, dict]: 
         # task_id = self.candidates[action]
         # task_id=action
     

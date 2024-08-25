@@ -50,12 +50,12 @@ def gen_instance_triangle(n_j, n_m, low, high):
         for machine in range(n_m):
             
             peak = np.random.randint(low, high)
-            left = np.floor(0.85 * peak)
-            right = np.ceil(1.3 * peak)
+            left = np.random.randint(np.floor(0.85 * peak),peak)
+            right = np.random.randint(peak, np.ceil(1.3 * peak))
             # processing_time[job, machine] = [left, peak, right]
-            processing_time['left'][job, machine] = peak - left if peak - left >= 1 else peak
+            processing_time['left'][job, machine] = left if left >= low else low
             processing_time['peak'][job, machine] = peak
-            processing_time['right'][job, machine] = peak + right if peak + right <= 99 else peak
+            processing_time['right'][job, machine] = right if right <= high else high
 
     # 机器编号，从0开始, shape (n_j,n_m), 每一行代表一个job的机器处理顺序
     task_machines = np.expand_dims(np.arange(0, n_m), axis=0).repeat(repeats=n_j, axis=0)
@@ -78,15 +78,16 @@ def _permute_rows(x: np.ndarray):
 def gen_and_save(n_j=6, n_m=6, low=1, high=99, batch_size=100, seed=200):
     np.random.seed(seed)
     data = np.array([gen_instance_triangle(n_j=n_j, n_m=n_m, low=low, high=high) for _ in range(batch_size)])
-    print(data.shape)
+    # print(data)
     folder = os.path.join(get_project_root(), "data")
     os.makedirs(folder, exist_ok=True)
-    np.save(os.path.join(folder, "generatedData{}_{}_instanceNums{}_Seed{}.npy".format(n_j, n_m, batch_size, seed)), data)
+    np.save(os.path.join(folder, "synthetic_{}_{}_instanceNums{}_Seed{}.npy".format(n_j, n_m, batch_size, seed)), data)
 
 
 if __name__ == '__main__':
-    gen_and_save(n_j=20,
-                 n_m=20,
+    # 6*6 
+    gen_and_save(n_j=30,
+                 n_m=15,
                  low=1,
                  high=99,
                  batch_size=50,
