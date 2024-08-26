@@ -111,7 +111,7 @@ def solve_cp_model(num_machines, jobs_data):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('--instance_type', type=str, default='synthetic')
+    parser.add_argument('--instance_type', type=str, default='benchmarks')
     parser.add_argument('--instance', type=str, default='instances')
     parser.add_argument('--instance_nums', type=int, default=50)
     parser.add_argument('--seed', type=int, default=200)

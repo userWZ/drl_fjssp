@@ -20,6 +20,9 @@ class FuzzyNumber:
             self.mid + other.mid,
             self.high + other.high
         )
+        
+    def __repr__(self):
+        return " left:% s peak:% s right:% s" % (self.low, self.mid, self.high)
 
 class Scheduler:
     def __init__(self, jobs, dependencies, pdr):
@@ -117,7 +120,7 @@ class Scheduler:
             for neighbor in self.dependencies[task]:
                 self.task_start_times[neighbor] = self.task_start_times[neighbor].max(end_time)
 
-            # print(f"Task {task} (Job {job_id}) assigned to machine {machine_index} from {start_time} to {end_time}")
+            print(f"Task {task} (Job {job_id}) assigned to machine {machine_index} from {start_time} to {end_time}")
 
         # 计算 makespan
         makespan = self.calculate_makespan()
