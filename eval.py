@@ -92,6 +92,11 @@ if __name__ == '__main__':
     ppo = build_ppo(model)
     ppo.policy.load_state_dict(torch.load(configs.eval_model_path, configs.device), False)
     
+    print('evaluation begin >>> model:{}, n_j: {}, n_m: {}, instance_type: {}'.format(configs.eval_model_path, 
+                                                                                      configs.n_j, 
+                                                                                      configs.n_m, 
+                                                                                      configs.instance_type))
+    
     results = []
     # 合成实例
     if configs.instance_type == 'synthetic':
@@ -109,7 +114,7 @@ if __name__ == '__main__':
         for instance in instances:
             print('====%s eval begin===='%instance)
             # 读取实例
-            instance_path = os.path.join(configs.instance, instance)
+            instance_path = os.path.join(instances_path, instance)
             jobs, machines, processing_time = read_dataset(instance_path)
             # 假设你的三维列表名为three_dimensional_list
             # 创建四个空的二维列表，分别用于存放包含a、b、c、d的元素
@@ -120,7 +125,7 @@ if __name__ == '__main__':
             
             data = (op_left, op_peak, op_right, machine)
             
-            makespan, solve_time = evaluation(data=data, instance=instance, ppo=ppo, render=configs.render)
+            makespan, solve_time = evaluation(data=data, ppo=ppo, render=configs.render)
 
             results.append([instance, makespan, solve_time])
             print(instance, makespan, solve_time)
