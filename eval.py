@@ -39,10 +39,9 @@ def to_tensor(adj, fea, candidate, mask):
         mask_tensor = torch.from_numpy(np.copy(mask)).to(configs.device).unsqueeze(0)
         return adj_tensor, fea_tensor, candidate_tensor, mask_tensor
     
-def evaluation(ppo=None, render=True, save=True):
-    
+def evaluation(data, ppo=None, render=True, save=True):
     env = FjsspEnv(configs.n_j, configs.n_m, configs.low, configs.high, configs.device)
-
+    
     obs, _ = env.reset(data=data)
     reward = 0
     index = 0
@@ -96,15 +95,20 @@ if __name__ == '__main__':
     results = []
     # 合成实例
     if configs.instance_type == 'synthetic':
-        instance_file = os.path.join(configs.instance, 'synthetic', f"synthetic_{configs.n_j}_{configs.n_m}_instanceNums{configs.instance_nums}_Seed{configs.seed}.npy")
+        instance_file = os.path.join(configs.instance, 'synthetic', f"synthetic_{configs.n_j}_{configs.n_m}_instanceNums{configs.instance_nums}_Seed{configs.np_seed_validation}.npy")
         eval_instances = np.load(instance_file)
-        for instance in eval_instances:
-            
+        for i, data in enumerate(eval_instances):
+            makespan, solve_time = evaluation(data=data, ppo=ppo, render=configs.render)
+            results.append([i, makespan, solve_time])
+            print("instances", i, makespan, solve_time)
+            df_results = pd.DataFrame(results, columns=['Instance', 'Makespan', 'Time'])
+            df_results.to_csv(os.path.join(configs.eval_save_path, 'synthetic_model_j{j}_m{m}_results.csv'.format(j=configs.n_j, m=configs.n_m)), index=False)
     else:
-        instances_path = os.path.join(configs.instance, 'benchmark')
+        instances_path = os.path.join(configs.instance, 'benchmarks')
         instances = os.listdir(instances_path)
         for instance in instances:
             print('====%s eval begin===='%instance)
+            # 读取实例
             instance_path = os.path.join(configs.instance, instance)
             jobs, machines, processing_time = read_dataset(instance_path)
             # 假设你的三维列表名为three_dimensional_list
@@ -115,13 +119,14 @@ if __name__ == '__main__':
             op_right = np.array([[item[3] for item in sublist] for sublist in processing_time])
             
             data = (op_left, op_peak, op_right, machine)
-            makespan, solve_time = evaluation(instance=instance, ppo=ppo, render=configs.render)
+            
+            makespan, solve_time = evaluation(data=data, instance=instance, ppo=ppo, render=configs.render)
 
             results.append([instance, makespan, solve_time])
             print(instance, makespan, solve_time)
-
-    df_results = pd.DataFrame(results, columns=['Instance', 'Makespan', 'Time'])
-    df_results.to_csv(os.path.join(configs.eval_save_path, 'model_j{j}_m{m}_results.csv'.format(j=configs.n_j, m=configs.n_m)), index=False)
+            
+            df_results = pd.DataFrame(results, columns=['Instance', 'Makespan', 'Time'])
+            df_results.to_csv(os.path.join(configs.eval_save_path, 'benchmarks_model_j{j}_m{m}_results.csv'.format(j=configs.n_j, m=configs.n_m)), index=False)
 
 
 

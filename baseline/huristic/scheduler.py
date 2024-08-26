@@ -3,9 +3,9 @@ from collections import deque
 
 class FuzzyNumber:
     def __init__(self, low, mid, high):
-        self.low = low
-        self.mid = mid
-        self.high = high
+        self.low = int(low)
+        self.mid = int(mid)
+        self.high = int(high)
 
     def max(self, other):
         return FuzzyNumber(

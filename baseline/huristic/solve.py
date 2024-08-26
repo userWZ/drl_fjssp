@@ -4,6 +4,8 @@ from scheduler import Scheduler, FuzzyNumber
 import time
 import os
 import pandas as pd
+import argparse
+import numpy as np
 
 def parse_file(dataset_url: str):
     with open(dataset_url, 'r') as file:
@@ -39,19 +41,34 @@ def parse_file(dataset_url: str):
             jobs[job_id]["tasks"][task_index]["processing_time"] = FuzzyNumber(*duration)
             task_id += 1
 
-    dependencies = defaultdict(list)
-    for job_id in range(1, num_jobs + 1):
-        tasks = jobs[job_id]["tasks"]
-        for i in range(len(tasks) - 1):
-            dependencies[tasks[i]["id"]].append(tasks[i + 1]["id"])
+    dependencies = job2dependency(jobs)
 
     return jobs, dependencies
 
 
+def job2dependency(jobs):
+    dependencies = defaultdict(list)
+    for job_id, job in jobs.items():
+        tasks = job["tasks"]
+        for i in range(len(tasks) - 1):
+            dependencies[tasks[i]["id"]].append(tasks[i + 1]["id"])
+    return dependencies
+
 if __name__ == '__main__':
-    
-    instances = os.listdir("instances")
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--instance_type', type=str, default='synthetic')
+    parser.add_argument('--instance', type=str, default='instances')
+    parser.add_argument('--instance_nums', type=int, default=50)
+    parser.add_argument('--seed', type=int, default=200)
+    parser.add_argument('--n_j', type=int, default=10)
+    parser.add_argument('--n_m', type=int, default=5)
+    parser.add_argument('--pdr', type=str, default='mwkr')
+    args = parser.parse_args()
+    instance_type = args.instance_type
+    instance_url = os.path.join(args.instance, instance_type)
+
     result = []
+    
     pdrs = {
         'spt': 'shortest_processing_time',
         'mwkr': 'most_work_remaining',
@@ -61,18 +78,42 @@ if __name__ == '__main__':
         'lor': 'least_operations_remaining',
         'fifo': 'first_come_first_served',
     }
-    pdr = 'mopr'
-    for instance in instances:
-        start = time.time()
-        print(f"Processing {instance}")
-        instance_url = os.path.join("instances", instance)
-        jobs, dependencies = parse_file(instance_url)
-        
-        scheduler = Scheduler(jobs, dependencies, pdr=pdrs['mwkr'])
-        makespan = scheduler.schedule()
-        end = time.time()
-        print(f"Instance {instance} with PDR {pdr} has makespan {makespan}, ", end - start)
-        result.append([instance, makespan, end - start])
-        
-    df_results = pd.DataFrame(result, columns=['Instance', 'Makespan', 'solve_time'])
-    df_results.to_csv('baseline/huristic/{}.csv'.format(pdr), index=False)
+    
+    if instance_type == 'synthetic':
+        instance_file = os.path.join(args.instance, 'synthetic', f"synthetic_{args.n_j}_{args.n_m}_instanceNums{args.instance_nums}_Seed{args.seed}.npy")   
+        instances = np.load(instance_file)
+        for i, data in enumerate(instances):
+            start = time.time()
+            left, peak, right, machine = data
+            jobs = {}
+            for job_id in range(1, len(machine) + 1):
+                jobs[job_id] = {"tasks": []}
+                for task_id in range(1, len(machine[job_id - 1]) + 1):
+                    jobs[job_id]["tasks"].append({
+                        "id": task_id,
+                        "machine": int(machine[job_id - 1][task_id - 1]),
+                        "processing_time": FuzzyNumber(left[job_id - 1][task_id - 1], peak[job_id - 1][task_id - 1], right[job_id - 1][task_id - 1])
+                    })
+            dependencies = job2dependency(jobs)
+            scheduler = Scheduler(jobs, dependencies, pdrs['mwkr'])
+            makespan = scheduler.schedule()
+            end = time.time()
+            print(f"Instance {i} with PDR {args.pdr} has makespan {makespan}, ", end - start)
+            result.append([i, makespan, end - start])
+    else:
+        instances_path = os.path.join(args.instance, 'benchmarks')
+        instances = os.listdir(instances_path)
+        for instance in instances:
+            start = time.time()
+            print(f"Processing {instance}")
+            instance_url = os.path.join(instances_path, instance)
+            jobs, dependencies = parse_file(instance_url)
+            
+            scheduler = Scheduler(jobs, dependencies, pdr=pdrs['mwkr'])
+            makespan = scheduler.schedule()
+            end = time.time()
+            print(f"Instance {instance} with PDR {args.pdr} has makespan {makespan}, ", end - start)
+            result.append([instance, makespan, end - start])
+            
+        df_results = pd.DataFrame(result, columns=['Instance', 'Makespan', 'solve_time'])
+        df_results.to_csv('baseline/huristic/{}.csv'.format(pdr), index=False)
