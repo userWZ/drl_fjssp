@@ -111,12 +111,12 @@ def solve_cp_model(num_machines, jobs_data):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('--instance_type', type=str, default='benchmarks')
+    parser.add_argument('--instance_type', type=str, default='synthetic')
     parser.add_argument('--instance', type=str, default='instances')
     parser.add_argument('--instance_nums', type=int, default=50)
     parser.add_argument('--seed', type=int, default=200)
-    parser.add_argument('--n_j', type=int, default=10)
-    parser.add_argument('--n_m', type=int, default=5)
+    parser.add_argument('--n_j', type=int, default=50)
+    parser.add_argument('--n_m', type=int, default=20)
     args = parser.parse_args()
     instance_type = args.instance_type
     instance_url = os.path.join(args.instance, instance_type)
@@ -127,7 +127,9 @@ if __name__ == "__main__":
         instance_file = os.path.join(args.instance, 'synthetic', f"synthetic_{args.n_j}_{args.n_m}_instanceNums{args.instance_nums}_Seed{args.seed}.npy")
         instances = np.load(instance_file)
         for i, data in enumerate(instances):
+            print("solve synthetic instance {}".format(i))
             start_time = time.time()
+            data = data.astype(int)
             left, peak, right, machine = data
             num_machines = args.n_m
             num_jobs = args.n_j
@@ -137,7 +139,7 @@ if __name__ == "__main__":
             result.append([i, makespan, end_time - start_time])
             # print(f"Instance {i} has makespan {makespan}")
             df_results = pd.DataFrame(result, columns=['Instance', 'Makespan', 'Time']) 
-            df_results.to_csv('baseline/or-tools/or-tools-synthetic.csv', index=False)  
+            df_results.to_csv(f'baseline/or-tools/or-tools-synthetic_j{args.n_j}_m{args.n_m}.csv', index=False)  
     else: # benchmark
         instances_path = os.path.join(args.instance, 'benchmarks')
         instances = os.listdir(instances_path)
