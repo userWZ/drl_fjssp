@@ -56,7 +56,7 @@ def job2dependency(jobs):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--instance_type', type=str, default='synthetic')
+    parser.add_argument('--instance_type', type=str, default='benchmarks')
     parser.add_argument('--instance', type=str, default='instances')
     parser.add_argument('--instance_nums', type=int, default=50)
     parser.add_argument('--seed', type=int, default=200)
@@ -127,9 +127,11 @@ if __name__ == '__main__':
         df_results['Instance'] = instances
         
         for key, value in pdrs.items():
+            
             sovle_time = []
             makespan = []
             for instance in instances:
+                print
                 start = time.time()
                 print(f"Processing {instance}")
                 instance_url = os.path.join(instances_path, instance)
