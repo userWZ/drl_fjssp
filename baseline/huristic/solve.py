@@ -131,7 +131,7 @@ if __name__ == '__main__':
             sovle_time = []
             makespan = []
             for instance in instances:
-                print
+                
                 start = time.time()
                 print(f"Processing {instance}")
                 instance_url = os.path.join(instances_path, instance)
