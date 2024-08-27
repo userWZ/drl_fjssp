@@ -81,25 +81,25 @@ def least_operations_remaining_rule(dispatcher: Dispatcher) -> Operation:
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--instance_type', type=str, default='synthetic')
+    parser.add_argument('--instance_type', type=str, default='benchmarks')
     parser.add_argument('--instance', type=str, default='instances')
     parser.add_argument('--instance_nums', type=int, default=50)
     parser.add_argument('--seed', type=int, default=200)
-    parser.add_argument('--n_j', type=int, default=6)
-    parser.add_argument('--n_m', type=int, default=6)
+    parser.add_argument('--n_j', type=int, default=30)
+    parser.add_argument('--n_m', type=int, default=20)
     # parser.add_argument('--pdr', type=str, default='mwkr')
     args = parser.parse_args()
     instance_type = args.instance_type
     instance_path = os.path.join(args.instance, instance_type)
    
     pdrs = {
-        'spt': 'shortest_processing_time',
-        # 'mwkr': 'most_work_remaining',
-        # 'mopr': 'most_operations_remaining',
-        # 'lpt': 'longest_processing_time',
-        # 'lifo': 'last_in_first_out',
-        # 'lor': 'least_operations_remaining',
-        # 'fifo': 'first_come_first_served',
+        'spt': DispatchingRuleSolver(dispatching_rule='shortest_processing_time'),
+        'mwkr': DispatchingRuleSolver(dispatching_rule='most_work_remaining'),
+        'mor': DispatchingRuleSolver(dispatching_rule='most_operations_remaining'),
+        'lpt': DispatchingRuleSolver(dispatching_rule=longest_processing_time_rule),
+        'lifo': DispatchingRuleSolver(dispatching_rule=last_in_first_out_rule),
+        'lor': DispatchingRuleSolver(dispatching_rule=least_operations_remaining_rule), 
+        'fifo': DispatchingRuleSolver(dispatching_rule='first_come_first_served'),  
     }
    
     if instance_type == 'synthetic':
@@ -108,6 +108,7 @@ if __name__ == "__main__":
         df_results = pd.DataFrame()
         df_results['Instance'] = list(range(len(instances))) + ['Average']
         for key, value in pdrs.items():
+            solver = pdrs[key]
             sovle_time = []
             makespan = []
             for i, data in enumerate(instances):
@@ -126,7 +127,7 @@ if __name__ == "__main__":
                     jobs.append(fuzzyOperations)
                 
                 jsp_instance = JobShopInstance(jobs, name=i)
-                solver = DispatchingRuleSolver(dispatching_rule=value)
+                
                 schedule = solver(jsp_instance)
                 end = time.time()
                 makespan.append(schedule.makespan())
@@ -144,30 +145,22 @@ if __name__ == "__main__":
         for key, value in pdrs.items():
             sovle_time = []
             makespan = []
-            
+            solver = pdrs[key]
             for instance in instances:
                 
                 start_time = time.time()
                 instance_url = os.path.join(instance_path, instance)
                 jobs = parse_file(instance_url)
                 jsp_instnce = JobShopInstance(jobs, name=instance)
-        
-                if value == 'least_operations_remaining':
-                    solver = DispatchingRuleSolver(dispatching_rule=least_operations_remaining_rule)
-                elif value == 'longest_processing_time':
-                    solver = DispatchingRuleSolver(dispatching_rule=longest_processing_time_rule)
-                elif value == 'last_in_first_out':
-                    solver = DispatchingRuleSolver(dispatching_rule=last_in_first_out_rule)
-                else:
-                    solver = DispatchingRuleSolver(dispatching_rule=value)
-                    
+
                 schedule = solver(jsp_instnce)
+                print(f"Instance {instance} solved by pdr {key} has makespan {mk}, ", end_time - start_time)
                 end_time = time.time()
                 mk = schedule.makespan()
                 makespan.append(mk)
                 sovle_time.append(end_time - start_time)   
                  
-                print(f"Instance {instance.name} has makespan {mk}, ", end_time - start_time)
+                
             df_results[f'{key}_makespan'] = makespan
             df_results[f'{key}_solve_time'] = sovle_time
         df_results.to_csv('baseline/huristic/pdr_benchmarks.csv', index=False)
