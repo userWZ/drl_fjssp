@@ -4,17 +4,12 @@ from typing import Tuple
 import matplotlib.pyplot as plt
 import matplotlib.colors as mc
 import numpy as np
+import time
 from gym.core import ObsType
 
 from env.utils import gen_instance_uniformly, gen_instance_triangle
 from env.base_env import BaseEnv
 
-
-class TFN:
-    def __init__(self, left, peak, right):
-        self.left = left
-        self.peak = peak
-        self.right = right
 
 class FjsspEnv(BaseEnv):
     def __init__(self, n_j, n_m, dur_low, dur_high, device):
@@ -133,15 +128,16 @@ class FjsspEnv(BaseEnv):
                 self.scheduled_marks.reshape(-1, 1)], axis=1, dtype=np.float32
         )
         # 初始可执行工序
-        self.candidates = copy.deepcopy(self.task_ids[:, 0])
+        self.candidates = self.task_ids[:, 0]
         self.mask = np.array([False for _ in range(self.n_j)])
-        obs = copy.deepcopy((self.adj_matrix, feature, self.candidates, self.mask))
+        obs = (self.adj_matrix, feature, self.candidates, self.mask)
         obs = self._to_tensor(obs)
         info = {}
 
         return obs, info
 
     def step(self, task_id: int) -> Tuple[ObsType, float, bool, bool, dict]: 
+        start_time = time.time()
         # task_id = self.candidates[action]
         # task_id=action
     
@@ -175,7 +171,7 @@ class FjsspEnv(BaseEnv):
                 self.low_bounds['right'].reshape(-1, 1) / 1000,
                 self.scheduled_marks.reshape(-1, 1)], axis=1, dtype=np.float32
         )
-        obs = copy.deepcopy((self.adj_matrix, feature, self.candidates, self.mask))
+        obs =(self.adj_matrix, feature, self.candidates, self.mask)
     
         obs = self._to_tensor(obs)
         # 三组奖励一起算            
@@ -191,9 +187,9 @@ class FjsspEnv(BaseEnv):
         self.estimated_max_end_time["left"] = np.max(self.low_bounds["left"])
         self.estimated_max_end_time["peak"] = np.max(self.low_bounds["peak"])
         self.estimated_max_end_time["right"] = np.max(self.low_bounds["right"])
-        terminated = False
-        if len(self.scheduled_task_ids) == self.task_size:
-            terminated = True
+        terminated = len(self.scheduled_task_ids) == self.task_size
+        if terminated:
+    
             # calculate makespan
             cur_make_span = np.max(self.compute_expect_fuzzy(self.low_bounds['left'][:, -1], 
                                                              self.low_bounds['peak'][:, -1],
@@ -203,7 +199,8 @@ class FjsspEnv(BaseEnv):
         info = {}
         
         self.episode_reward += total_reward
-        
+        end_time = time.time()
+        # print(self.step_count, "step time:", end_time - start_time)
         return obs, total_reward, terminated, False, info
 
     def render(self):
@@ -256,35 +253,39 @@ class FjsspEnv(BaseEnv):
 
     def update_low_bounds(self, row, col):
         for key in self.low_bounds.keys():
-            # 更新当前task的结束时间
             self.low_bounds[key][row, col] = self.task_finish_times[key][row, col]
-            # 对于其他未调度的task，采用加上前面完成时间作为low bounds
-            for i in range(self.n_j):
-                for j in range(self.n_m):
-                    if self.task_finish_times[key][i, j] == 0:
-                        if j == 0:
-                            self.low_bounds[key][i, j] = self.task_durations[key][i, j]
-                        else:
-                            self.low_bounds[key][i, j] = self.task_durations[key][i, j] + self.low_bounds[key][i, j - 1]
+            unscheduled_mask = self.task_finish_times[key] == 0
+            self.low_bounds[key][unscheduled_mask] = self.task_durations[key][unscheduled_mask] + np.roll(self.low_bounds[key], shift=1, axis=1)[unscheduled_mask]
+            self.low_bounds[key][unscheduled_mask & (np.arange(self.n_m) == 0)] = self.task_durations[key][unscheduled_mask & (np.arange(self.n_m) == 0)]
 
+    # def build_adjacency_matrix(self):
+    #     """
+    #     构建邻接矩阵( 有向图 )
+    #     """
+    #     adj_matrix = np.eye(self.task_size, dtype=np.single)
+    #     # for i in range(1, 1 + self.task_size):
+    #     #     if i == 0 or i % self.n_m != 0:
+    #     #         for j in range(1, self.task_size):
+    #     #             if i == j:
+    #     #                 adj_matrix[i - 1, j] = 1
+
+    #     # 根据scheduled_task_ids更新邻接矩阵
+    #     for tasks in self.machine_occupied_times['left']:
+    #         for i in range(0, len(tasks) - 1):
+    #             adj_matrix[tasks[i][0], tasks[i + 1][0]] = 1
+    #             # adj_matrix[tasks[i + 1][0], tasks[i][0]] = 1
+
+    #     return adj_matrix
+    
     def build_adjacency_matrix(self):
-        """
-        构建邻接矩阵( 有向图 )
-        """
         adj_matrix = np.eye(self.task_size, dtype=np.single)
-        # for i in range(1, 1 + self.task_size):
-        #     if i == 0 or i % self.n_m != 0:
-        #         for j in range(1, self.task_size):
-        #             if i == j:
-        #                 adj_matrix[i - 1, j] = 1
-
-        # 根据scheduled_task_ids更新邻接矩阵
         for tasks in self.machine_occupied_times['left']:
-            for i in range(0, len(tasks) - 1):
-                adj_matrix[tasks[i][0], tasks[i + 1][0]] = 1
-                # adj_matrix[tasks[i + 1][0], tasks[i][0]] = 1
-
+            if len(tasks) > 1:
+                indices = np.array([task[0] for task in tasks])
+                adj_matrix[indices[:-1], indices[1:]] = 1
+        
         return adj_matrix
+
 
     def _to_tensor(self, obs):
         adj, feature, candidate, finish_mark = obs
@@ -293,14 +294,6 @@ class FjsspEnv(BaseEnv):
         # candidate = torch.tensor(candidate, dtype=torch.int64).to(self.device).unsqueeze(0)
         # finish_mark = torch.tensor(finish_mark, dtype=torch.bool).to(self.device).unsqueeze(0)
         return adj.T, feature, candidate, finish_mark
-
-    def max_TFN(self, A, B):
-        """
-        计算两个TFN的最大值
-        A=(aL,a,aR), B=(bL,b,bR)
-        max{A, B} =(max(aL,bL), max(a, b), max(aR,bR)) .
-        """
-        return (max(A[0], B[0]), max(A[1], B[1]), max(A[2], B[2]))
 
 
 if __name__ == '__main__':

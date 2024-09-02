@@ -9,8 +9,8 @@ def setting_params():
     # args for device
     parser.add_argument("--device", type=str, default="cuda:0,1,2,3", help="Number of jobs of instances")
     # args for env
-    parser.add_argument("--n_j", type=int, default=6, help="Number of jobs of instance")
-    parser.add_argument("--n_m", type=int, default=6, help="Number of machines instance")
+    parser.add_argument("--n_j", type=int, default=100, help="Number of jobs of instance")
+    parser.add_argument("--n_m", type=int, default=20, help="Number of machines instance")
     parser.add_argument("--rewardscale", type=float, default=0.0, help="Reward scale for positive rewards")
     parser.add_argument(
         "--init_quality_flag", type=bool, default=False, help="Flag of whether init state quality is 0, True for 0"
@@ -69,13 +69,13 @@ def setting_params():
     parser.add_argument("--log_dir", type=str, default="runs/", help="root path of log dir")
     parser.add_argument("--instance_nums", type=int, default=50, help="number of instances for validation")
     parser.add_argument("--output_prefix", type=str, default='', help="prefix of output dir")
-    parser.add_argument('--instance_type', type=str, default='synthetic')
+    parser.add_argument('--instance_type', type=str, default='test')
     parser.add_argument('--instance', type=str, default='instances')
     parser.add_argument('--render', type=bool, default=False)
-    parser.add_argument('--eval_model_path', type=str, default="/home/wzh/Desktop/drl_fjssp/output/j6_m6_seed600/2024-08-24-16-08-14/episode_45600_best.pth")
+    parser.add_argument('--eval_model_path', type=str, default="output/j100_m20_seed600/2024-05-26-19-12-07/episode_9000_best.pth")
     # parser.add_argument('--eval_model_path', type=str, default='output/j10_m10_seed600/2024-05-16-23-20-49/best.pth')
     parser.add_argument('--eval_save_path', type=str, default='')
-    parserd.add_argument('--greedy', type=bool, default=False)
+    parser.add_argument('--sample_strategy', type=str, default='greedy')
     configs = parser.parse_args()
 
     run_time = datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S')

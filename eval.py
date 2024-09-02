@@ -39,7 +39,7 @@ def to_tensor(adj, fea, candidate, mask):
         mask_tensor = torch.from_numpy(np.copy(mask)).to(configs.device).unsqueeze(0)
         return adj_tensor, fea_tensor, candidate_tensor, mask_tensor
     
-def evaluation(data, ppo=None, render=True, save=True, greedy=False):
+def evaluation(data, ppo=None, render=True, save=True, sample_strategy='sample'):
     env = FjsspEnv(configs.n_j, configs.n_m, configs.low, configs.high, configs.device)
     
     obs, _ = env.reset(data=data)
@@ -50,7 +50,7 @@ def evaluation(data, ppo=None, render=True, save=True, greedy=False):
         index = index + 1
         obs = to_tensor(*obs)
         pi, value = ppo.policy_old(obs)
-        if greedy:
+        if sample_strategy == 'greedy':
             action = ppo.greedy_select_action(pi, obs[2])
         else:
             action, a_idx, logprob = ppo.sample_action(pi, obs[2])
@@ -106,12 +106,36 @@ if __name__ == '__main__':
         instance_file = os.path.join(configs.instance, 'synthetic', f"synthetic_{configs.n_j}_{configs.n_m}_instanceNums{configs.instance_nums}_Seed{configs.np_seed_validation}.npy")
         eval_instances = np.load(instance_file)
         for i, data in enumerate(eval_instances):
-            makespan, solve_time = evaluation(data=data, ppo=ppo, render=configs.render)
+            makespan, solve_time = evaluation(data=data, ppo=ppo, render=configs.render, sample_strategy=configs.sample_strategy)
             results.append([i, makespan, solve_time])
             print("instances", i, makespan, solve_time)
             df_results = pd.DataFrame(results, columns=['Instance', 'Makespan', 'Time'])
             df_results.to_csv(os.path.join(configs.eval_save_path, 
-                                           'synthetic_model_j{j}_m{m}_{strategy}_results.csv'.format(j=configs.n_j, m=configs.n_m, trategy=configs.greedy)), index=False)
+                                           'synthetic_model_j{j}_m{m}_{s}_results.csv'.format(j=configs.n_j, m=configs.n_m, s=configs.sample_strategy)), index=False)
+            
+    elif configs.instance_type == 'test':
+        instances_path = os.path.join(configs.instance, 'test')
+        instances = os.listdir(instances_path)
+        for instance in instances:
+            print('====%s eval begin===='%instance)
+            # 读取实例
+            instance_path = os.path.join(instances_path, instance)
+            jobs, machines, processing_time = read_dataset(instance_path)
+            # 假设你的三维列表名为three_dimensional_list
+            # 创建四个空的二维列表，分别用于存放包含a、b、c、d的元素
+            machine = np.array([[item[0] for item in sublist] for sublist in processing_time])
+            op_left = np.array([[item[1] for item in sublist] for sublist in processing_time])
+            op_peak = np.array([[item[2] for item in sublist] for sublist in processing_time])
+            op_right = np.array([[item[3] for item in sublist] for sublist in processing_time])
+            
+            data = (op_left, op_peak, op_right, machine)
+            
+            makespan, solve_time = evaluation(data=data, ppo=ppo, render=configs.render, sample_strategy=configs.sample_strategy)
+
+            results.append([instance, makespan, solve_time])
+            print(instance, makespan, solve_time)
+            df_results = pd.DataFrame(results, columns=['Instance', 'Makespan', 'Time'])
+            df_results.to_csv(os.path.join(configs.eval_save_path, 'benchmarks_model_j{j}_m{m}_{s}_results.csv'.format(j=configs.n_j, m=configs.n_m, s=configs.sample_strategy)), index=False)
     else:
         instances_path = os.path.join(configs.instance, 'benchmarks')
         instances = os.listdir(instances_path)
@@ -129,13 +153,13 @@ if __name__ == '__main__':
             
             data = (op_left, op_peak, op_right, machine)
             
-            makespan, solve_time = evaluation(data=data, ppo=ppo, render=configs.render)
+            makespan, solve_time = evaluation(data=data, ppo=ppo, render=configs.render, sample_strategy=configs.sample_strategy)
 
             results.append([instance, makespan, solve_time])
             print(instance, makespan, solve_time)
             
             df_results = pd.DataFrame(results, columns=['Instance', 'Makespan', 'Time'])
-            df_results.to_csv(os.path.join(configs.eval_save_path, 'benchmarks_model_j{j}_m{m}_{s}_results.csv'.format(j=configs.n_j, m=configs.n_m, s=configs.greedy)), index=False)
+            df_results.to_csv(os.path.join(configs.eval_save_path, 'benchmarks_model_j{j}_m{m}_{s}_results.csv'.format(j=configs.n_j, m=configs.n_m, s=configs.sample_strategy)), index=False)
 
 
 

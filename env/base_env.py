@@ -22,9 +22,9 @@ class BaseEnv(gym.Env, ABC):
         # ------- 用于辅助计算task的结束时间 ---------
         # 已调度任务的结束时间
         self.task_finish_times = {
-            "left": None,
-            "peak": None,
-            "right": None,
+            "left": np.zeros((n_j, n_m), dtype=np.single),
+            "peak": np.zeros((n_j, n_m), dtype=np.single),
+            "right": np.zeros((n_j, n_m), dtype=np.single),
         }
         
 
@@ -32,9 +32,9 @@ class BaseEnv(gym.Env, ABC):
         # self.machine_scheduled_tasks = None
         # 记录三种操作时间下机器被task占用的时间段, list of tuples, [(task,起始时间,结束时间),...]
         self.machine_occupied_times = {
-            "left": None,
-            "peak": None,
-            "right": None,
+            "left": [[] for _ in range(n_m)],
+            "peak": [[] for _ in range(n_m)],
+            "right": [[] for _ in range(n_m)],
         }
 
         # ------- 用于记录 ---------
@@ -44,6 +44,8 @@ class BaseEnv(gym.Env, ABC):
         self.step_count = 0
         # ------- 用于绘图 ---------
         self.history_make_span = []
+    
+    
 
     def compute_task_schedule_time(self, task_id, row, col):
         """
@@ -100,7 +102,7 @@ class BaseEnv(gym.Env, ABC):
         # 更新机器完成周期
         self.cur_make_span = np.max(self.task_finish_times["right"])
     
-    def insert_task(self, machine_occupied_times_true, task_id, job_task_ready_time, task_duration):
+    def insert_task(self, machine_occupied_times, task_id, job_task_ready_time, task_duration):
         """
         根据机器被占用的时间，考虑将task插入到什么位置
 
@@ -116,18 +118,16 @@ class BaseEnv(gym.Env, ABC):
         """
         # 寻找可用的插入空隙
         # 记录机器被task占用的时间段, list of tuples,  [[(task,起始时间,结束时间),...],[],[],...]
-        machine_occupied_times = copy.deepcopy(machine_occupied_times_true)
+        temp_machine_occupied_times = machine_occupied_times.copy()
         insert_pos = -1
         inserted = False
-        for i, (id, ostart, oend) in enumerate(machine_occupied_times):
+        for i, (id, ostart, oend) in enumerate(temp_machine_occupied_times):
             if ostart > job_task_ready_time:
                 insert_pos = i
                 break
             
         # 机器中开始时间没有晚于当前task开始时间，直接放到最后情况下，task的start_time
-        machine_ready_time = 0
-        if len(machine_occupied_times) > 0:
-            machine_ready_time = machine_occupied_times[-1][2]
+        machine_ready_time = machine_occupied_times[-1][2] if machine_occupied_times else 0
         start_time = max(machine_ready_time, job_task_ready_time)
         
         if insert_pos == -1:
@@ -135,16 +135,16 @@ class BaseEnv(gym.Env, ABC):
             return False, start_time, -1
         
         # 添加虚拟的时间片段,方便间隔计算
-        machine_occupied_times.insert(insert_pos, (task_id, job_task_ready_time, job_task_ready_time + task_duration))
+        temp_machine_occupied_times.insert(insert_pos, (task_id, job_task_ready_time, job_task_ready_time + task_duration))
         
         # 计算可用的空闲间隔
-        for i in range(insert_pos, len(machine_occupied_times) - 1):
+        for i in range(insert_pos, len(temp_machine_occupied_times) - 1):
             # 对于后续位置，计算每个位置之间的时间间隔
             if i == insert_pos:
-                start_time = max(machine_occupied_times[i][1], machine_occupied_times[i - 1][2] if i > 0 else 0)
+                start_time = max(temp_machine_occupied_times[i][1], temp_machine_occupied_times[i - 1][2] if i > 0 else 0)
             else:
-                start_time = machine_occupied_times[i][2]
-            gap = machine_occupied_times[i + 1][1] - start_time
+                start_time = temp_machine_occupied_times[i][2]
+            gap = temp_machine_occupied_times[i + 1][1] - start_time
             # 判断空闲间隔是否足够当前task执行
             if gap >= task_duration:
                 inserted = True
@@ -177,27 +177,18 @@ class BaseEnv(gym.Env, ABC):
         
         row, col = task_id // self.n_m, task_id % self.n_m
         
-        # 更新task完成时间
-        self.task_finish_times['left'][row, col] = start_time["left"] + task_duration["left"]
-        self.task_finish_times['peak'][row, col] = start_time["peak"] + task_duration["peak"]
-        self.task_finish_times['right'][row, col] = start_time["right"] + task_duration["right"]
-        
-        # 更新机器被占用时间
-        self.machine_occupied_times['left'][machine_id].insert(insert_pos, (task_id, start_time["left"], start_time["left"] + task_duration["left"]))
-        self.machine_occupied_times['peak'][machine_id].insert(insert_pos, (task_id, start_time["peak"], start_time["peak"] + task_duration["peak"]))
-        self.machine_occupied_times['right'][machine_id].insert(insert_pos, (task_id, start_time["right"], start_time["right"] + task_duration["right"]))
-
+        for key in ["left", "peak", "right"]:
+            self.task_finish_times[key][row, col] = start_time[key] + task_duration[key]
+            self.machine_occupied_times[key][machine_id].insert(insert_pos, (task_id, start_time[key], start_time[key] + task_duration[key]))
+            
     def put_end(self, task_id, machine_id, start_time, task_duration):
         self.scheduled_task_ids.append(task_id)
         
         row, col = task_id // self.n_m, task_id % self.n_m
         
-         # 更新task完成时间
-        self.task_finish_times['left'][row, col] = start_time["left"] + task_duration["left"]
-        self.task_finish_times['peak'][row, col] = start_time["peak"] + task_duration["peak"]
-        self.task_finish_times['right'][row, col] = start_time["right"] + task_duration["right"]
+        for key in ["left", "peak", "right"]:
+            # 更新task完成时间
+            self.task_finish_times[key][row, col] = start_time[key] + task_duration[key]
+            # 更新机器被占用时间
+            self.machine_occupied_times[key][machine_id].append((task_id, start_time[key], start_time[key] + task_duration[key]))
         
-        # 更新机器被占用时间
-        self.machine_occupied_times['left'][machine_id].append((task_id, start_time["left"], start_time["left"] + task_duration["left"]))
-        self.machine_occupied_times['peak'][machine_id].append((task_id, start_time["peak"], start_time["peak"] + task_duration["peak"]))
-        self.machine_occupied_times['right'][machine_id].append((task_id, start_time["right"], start_time["right"] + task_duration["right"]))

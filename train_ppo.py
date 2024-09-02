@@ -10,7 +10,7 @@ import global_util
 from models.actor_critic import ActorCritic
 from runner import Runner
 from jssp_tool.env.util import set_random_seed
-from jssp_tool.rl.agent.ppo.ppo_discrete import PPODiscrete
+from models.ppo_discrete import PPODiscrete
 from env.utils import gen_and_save
 import json
 
