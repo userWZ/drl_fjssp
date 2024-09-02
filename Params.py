@@ -75,6 +75,7 @@ def setting_params():
     parser.add_argument('--eval_model_path', type=str, default="/home/wzh/Desktop/drl_fjssp/output/j6_m6_seed600/2024-08-24-16-08-14/episode_45600_best.pth")
     # parser.add_argument('--eval_model_path', type=str, default='output/j10_m10_seed600/2024-05-16-23-20-49/best.pth')
     parser.add_argument('--eval_save_path', type=str, default='')
+    parserd.add_argument('--greedy', type=bool, default=False)
     configs = parser.parse_args()
 
     run_time = datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S')

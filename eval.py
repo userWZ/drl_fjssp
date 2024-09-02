@@ -39,7 +39,7 @@ def to_tensor(adj, fea, candidate, mask):
         mask_tensor = torch.from_numpy(np.copy(mask)).to(configs.device).unsqueeze(0)
         return adj_tensor, fea_tensor, candidate_tensor, mask_tensor
     
-def evaluation(data, ppo=None, render=True, save=True):
+def evaluation(data, ppo=None, render=True, save=True, greedy=False):
     env = FjsspEnv(configs.n_j, configs.n_m, configs.low, configs.high, configs.device)
     
     obs, _ = env.reset(data=data)
@@ -50,7 +50,10 @@ def evaluation(data, ppo=None, render=True, save=True):
         index = index + 1
         obs = to_tensor(*obs)
         pi, value = ppo.policy_old(obs)
-        action, a_idx, logprob = ppo.sample_action(pi, obs[2])
+        if greedy:
+            action = ppo.greedy_select_action(pi, obs[2])
+        else:
+            action, a_idx, logprob = ppo.sample_action(pi, obs[2])
         # print(index, action.item())
         next_obs, reward, done, _, _ = env.step(action.item())
         obs = next_obs
