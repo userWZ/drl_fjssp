@@ -14,7 +14,7 @@ from result_generator import to_dataframe
 from models.actor_critic import ActorCritic
 from jssp_tool.rl.agent.ppo.ppo_discrete import PPODiscrete
 import pandas as pd
-
+import datetime
 configs = setting_params()
 configs.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -77,7 +77,7 @@ def evaluation(data, ppo=None, render=True, save=True, sample_strategy='sample')
 
 
 if __name__ == '__main__':
-
+    sample_times = 10
     model = ActorCritic(
         n_j=configs.n_j,
         n_m=configs.n_m,
@@ -109,33 +109,10 @@ if __name__ == '__main__':
             makespan, solve_time = evaluation(data=data, ppo=ppo, render=configs.render, sample_strategy=configs.sample_strategy)
             results.append([i, makespan, solve_time])
             print("instances", i, makespan, solve_time)
-            df_results = pd.DataFrame(results, columns=['Instance', 'Makespan', 'Time'])
-            df_results.to_csv(os.path.join(configs.eval_save_path, 
-                                           'synthetic_model_j{j}_m{m}_{s}_results.csv'.format(j=configs.n_j, m=configs.n_m, s=configs.sample_strategy)), index=False)
+        df_results = pd.DataFrame(results, columns=['Instance', 'Makespan', 'Time'])
+        save_path = os.path.join(configs.eval_save_path, 'synthetic_model_j{j}_m{m}_{s}_results_{t}.csv'.format(j=configs.n_j, m=configs.n_m, s=configs.sample_strategy, t=datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S')))
+        df_results.to_csv(save_path, index=False)
             
-    elif configs.instance_type == 'test':
-        instances_path = os.path.join(configs.instance, 'test')
-        instances = os.listdir(instances_path)
-        for instance in instances:
-            print('====%s eval begin===='%instance)
-            # 读取实例
-            instance_path = os.path.join(instances_path, instance)
-            jobs, machines, processing_time = read_dataset(instance_path)
-            # 假设你的三维列表名为three_dimensional_list
-            # 创建四个空的二维列表，分别用于存放包含a、b、c、d的元素
-            machine = np.array([[item[0] for item in sublist] for sublist in processing_time])
-            op_left = np.array([[item[1] for item in sublist] for sublist in processing_time])
-            op_peak = np.array([[item[2] for item in sublist] for sublist in processing_time])
-            op_right = np.array([[item[3] for item in sublist] for sublist in processing_time])
-            
-            data = (op_left, op_peak, op_right, machine)
-            
-            makespan, solve_time = evaluation(data=data, ppo=ppo, render=configs.render, sample_strategy=configs.sample_strategy)
-
-            results.append([instance, makespan, solve_time])
-            print(instance, makespan, solve_time)
-            df_results = pd.DataFrame(results, columns=['Instance', 'Makespan', 'Time'])
-            df_results.to_csv(os.path.join(configs.eval_save_path, 'benchmarks_model_j{j}_m{m}_{s}_results.csv'.format(j=configs.n_j, m=configs.n_m, s=configs.sample_strategy)), index=False)
     else:
         instances_path = os.path.join(configs.instance, 'benchmarks')
         instances = os.listdir(instances_path)
@@ -153,14 +130,25 @@ if __name__ == '__main__':
             
             data = (op_left, op_peak, op_right, machine)
             
-            makespan, solve_time = evaluation(data=data, ppo=ppo, render=configs.render, sample_strategy=configs.sample_strategy)
+            if configs.sample_strategy == 'sample':
+                sample_result = []
+                for i in range(sample_times):
+                    makespan, solve_time = evaluation(data=data, ppo=ppo, render=configs.render, sample_strategy=configs.sample_strategy)
+                    sample_result.append([makespan, solve_time])
+                best_result_index = np.argmin([item[0] for item in sample_result])
+                makespan, solve_time = sample_result[best_result_index]
+    
+            else:
+                makespan, solve_time = evaluation(data=data, ppo=ppo, render=configs.render, sample_strategy=configs.sample_strategy)
 
             results.append([instance, makespan, solve_time])
             print(instance, makespan, solve_time)
             
-            df_results = pd.DataFrame(results, columns=['Instance', 'Makespan', 'Time'])
-            df_results.to_csv(os.path.join(configs.eval_save_path, 'benchmarks_model_j{j}_m{m}_{s}_results.csv'.format(j=configs.n_j, m=configs.n_m, s=configs.sample_strategy)), index=False)
-
+        df_results = pd.DataFrame(results, columns=['Instance', 'Makespan', 'Time'])
+        df_results = df_results.sort_values(by='Instance', ascending=True)
+        
+        save_path = os.path.join(configs.eval_save_path, 'benchmarks_model_j{j}_m{m}_{s}_results_{t}.csv'.format(j=configs.n_j, m=configs.n_m, s=configs.sample_strategy, t=datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S')))
+        df_results.to_csv(save_path, index=False)
 
 
 
