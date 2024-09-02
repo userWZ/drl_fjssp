@@ -110,7 +110,8 @@ if __name__ == '__main__':
             results.append([i, makespan, solve_time])
             print("instances", i, makespan, solve_time)
             df_results = pd.DataFrame(results, columns=['Instance', 'Makespan', 'Time'])
-            df_results.to_csv(os.path.join(configs.eval_save_path, 'synthetic_model_j{j}_m{m}_results.csv'.format(j=configs.n_j, m=configs.n_m)), index=False)
+            df_results.to_csv(os.path.join(configs.eval_save_path, 
+                                           'synthetic_model_j{j}_m{m}_{strategy}_results.csv'.format(j=configs.n_j, m=configs.n_m, trategy=configs.greedy)), index=False)
     else:
         instances_path = os.path.join(configs.instance, 'benchmarks')
         instances = os.listdir(instances_path)
@@ -134,7 +135,7 @@ if __name__ == '__main__':
             print(instance, makespan, solve_time)
             
             df_results = pd.DataFrame(results, columns=['Instance', 'Makespan', 'Time'])
-            df_results.to_csv(os.path.join(configs.eval_save_path, 'benchmarks_model_j{j}_m{m}_results.csv'.format(j=configs.n_j, m=configs.n_m)), index=False)
+            df_results.to_csv(os.path.join(configs.eval_save_path, 'benchmarks_model_j{j}_m{m}_{s}_results.csv'.format(j=configs.n_j, m=configs.n_m, s=configs.greedy)), index=False)
 
 
 
