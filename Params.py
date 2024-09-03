@@ -2,6 +2,15 @@ import argparse
 import datetime
 import os
 import json
+import re
+
+def extract_values_from_path(file_path):
+    pattern = r'j(\d+)_m(\d+)'
+    match = re.search(pattern, file_path)
+    if match:
+        return int(match.group(1)), int(match.group(2))
+    else:
+        raise ValueError("No match found in the file path")
 
 def setting_params():
 
@@ -9,8 +18,8 @@ def setting_params():
     # args for device
     parser.add_argument("--device", type=str, default="cuda:0,1,2,3", help="Number of jobs of instances")
     # args for env
-    parser.add_argument("--n_j", type=int, default=100, help="Number of jobs of instance")
-    parser.add_argument("--n_m", type=int, default=20, help="Number of machines instance")
+    parser.add_argument("--n_j", type=int, default=None, help="Number of jobs of instance")
+    parser.add_argument("--n_m", type=int, default=None, help="Number of machines instance")
     parser.add_argument("--rewardscale", type=float, default=0.0, help="Reward scale for positive rewards")
     parser.add_argument(
         "--init_quality_flag", type=bool, default=False, help="Flag of whether init state quality is 0, True for 0"
@@ -69,17 +78,28 @@ def setting_params():
     parser.add_argument("--log_dir", type=str, default="runs/", help="root path of log dir")
     parser.add_argument("--instance_nums", type=int, default=50, help="number of instances for validation")
     parser.add_argument("--output_prefix", type=str, default='', help="prefix of output dir")
-    parser.add_argument('--instance_type', type=str, default='test')
+    parser.add_argument('--instance_type', type=str, default='synthetic')
     parser.add_argument('--instance', type=str, default='instances')
     parser.add_argument('--render', type=bool, default=False)
     parser.add_argument('--eval_model_path', type=str, default="output/j100_m20_seed600/2024-05-26-19-12-07/episode_9000_best.pth")
     # parser.add_argument('--eval_model_path', type=str, default='output/j10_m10_seed600/2024-05-16-23-20-49/best.pth')
     parser.add_argument('--eval_save_path', type=str, default='')
-    parser.add_argument('--sample_strategy', type=str, default='greedy')
+    parser.add_argument('--sample_strategy', type=str, default='sample')
     configs = parser.parse_args()
 
     run_time = datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
 
+
+    if configs.n_j is None or configs.n_m is None:
+        if configs.eval_model_path:
+            n_j, n_m = extract_values_from_path(configs.eval_model_path)
+            if configs.n_j is None:
+                configs.n_j = n_j
+            if configs.n_m is None:
+                configs.n_m = n_m
+            print(f"Extracted values - n_j: {configs.n_j}, n_m: {configs.n_m}")
+            
+    
     configs.continued = False
     if configs.continue_model_path is not None:
         if not os.path.exists(configs.continue_model_path):

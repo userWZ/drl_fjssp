@@ -83,14 +83,14 @@ class Runner:
                     i_update + 1, mean_ep_reward, loss_sum, sum(ep_makespan) / len(ep_makespan)
                 )
             )
-            self.writer.add_scalar("train/reward", mean_ep_reward, i_update)
-            self.writer.add_scalar("train/loss", loss_sum, i_update)
-            self.writer.add_scalar("train/make_span", sum(ep_makespan) / len(ep_makespan), i_update)
-            self.writer.add_scalar("train/v_loss", v_loss, i_update)
-            self.writer.add_scalar("train/a_loss", a_loss, i_update)
+            self.writer.add_scalar("train/reward", mean_ep_reward, i_update + 1)
+            self.writer.add_scalar("train/loss", loss_sum, i_update + 1)
+            self.writer.add_scalar("train/make_span", sum(ep_makespan) / len(ep_makespan), i_update + 1)
+            self.writer.add_scalar("train/v_loss", v_loss, i_update + 1)
+            self.writer.add_scalar("train/a_loss", a_loss, i_update + 1)
 
             if (i_update + 1) % self.configs.val_frequency == 0:
-                best_result = self.test(self.vali_data, agent, best_result, i_update)
+                best_result = self.test(self.vali_data, agent, best_result, i_update + 1)
 
             if (i_update + 1) % self.configs.save_frequency == 0:
                 torch.save(agent.policy.state_dict(), os.path.join(self.model_dir, "episode_{}.pth".format(i_update + 1)))

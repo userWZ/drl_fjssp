@@ -9,7 +9,7 @@ def get_project_root() -> str:
     -------
 
     """
-    return os.path.join(os.path.dirname(__file__), ".")
+    return os.path.abspath(os.path.dirname(__file__))
 
 def get_latest_run_id(log_path: str = "", log_name: str = "") -> int:
     max_run_id = 0

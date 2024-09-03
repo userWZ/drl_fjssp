@@ -95,10 +95,11 @@ if __name__ == '__main__':
     ppo = build_ppo(model)
     ppo.policy.load_state_dict(torch.load(configs.eval_model_path, configs.device), False)
     
-    print('evaluation begin >>> model:{}, n_j: {}, n_m: {}, instance_type: {}'.format(configs.eval_model_path, 
+    print('evaluation begin >>> model:{}, n_j: {}, n_m: {}, instance_type: {}, sample_strategy: {}'.format(configs.eval_model_path, 
                                                                                       configs.n_j, 
                                                                                       configs.n_m, 
-                                                                                      configs.instance_type))
+                                                                                      configs.instance_type,
+                                                                                      configs.sample_strategy))
     
     results = []
     # 合成实例
@@ -106,7 +107,17 @@ if __name__ == '__main__':
         instance_file = os.path.join(configs.instance, 'synthetic', f"synthetic_{configs.n_j}_{configs.n_m}_instanceNums{configs.instance_nums}_Seed{configs.np_seed_validation}.npy")
         eval_instances = np.load(instance_file)
         for i, data in enumerate(eval_instances):
-            makespan, solve_time = evaluation(data=data, ppo=ppo, render=configs.render, sample_strategy=configs.sample_strategy)
+            
+            if configs.sample_strategy == 'sample':
+                sample_result = []
+                for t in range(sample_times):
+                    mks, st = evaluation(data=data, ppo=ppo, render=configs.render, sample_strategy=configs.sample_strategy)
+                    sample_result.append([mks, st])
+                best_result_index = np.argmin([item[0] for item in sample_result])
+                makespan, solve_time = sample_result[best_result_index]
+            else:
+                makespan, solve_time = evaluation(data=data, ppo=ppo, render=configs.render, sample_strategy=configs.sample_strategy)
+            
             results.append([i, makespan, solve_time])
             print("instances", i, makespan, solve_time)
         df_results = pd.DataFrame(results, columns=['Instance', 'Makespan', 'Time'])
