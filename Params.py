@@ -81,7 +81,7 @@ def setting_params():
     parser.add_argument('--instance_type', type=str, default='synthetic')
     parser.add_argument('--instance', type=str, default='instances')
     parser.add_argument('--render', type=bool, default=False)
-    parser.add_argument('--eval_model_path', type=str, default="output/j100_m20_seed600/2024-05-26-19-12-07/episode_9000_best.pth")
+    parser.add_argument('--eval_model_path', type=str, default="/disk1/all_users_sed/yangwj/drl_fjssp/output/j50_m20_seed600/2024-05-20-14-59-58_best_continued_episode_19100_best_continued_episode_41250_continued/episode_53900_best.pth")
     # parser.add_argument('--eval_model_path', type=str, default='output/j10_m10_seed600/2024-05-16-23-20-49/best.pth')
     parser.add_argument('--eval_save_path', type=str, default='')
     parser.add_argument('--sample_strategy', type=str, default='sample')

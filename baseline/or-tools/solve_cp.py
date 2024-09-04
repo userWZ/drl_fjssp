@@ -10,6 +10,9 @@ import numpy as np
 import argparse
 time_limit_seconds = 600
 
+def expected_makespan(left, peak, right):
+    return (2 * peak + left + right) / 4 
+
 def create_cp_model(num_machines, jobs_data):
     model = cp_model.CpModel()
 
@@ -75,9 +78,9 @@ def solve_cp_model(num_machines, jobs_data):
     
     status = solver.Solve(model)
     print(f'Status: {solver.StatusName(status)}')
-    min_makespan = solver.Value(makespan)
+    min_makespan = -1
     if status == cp_model.OPTIMAL or status == cp_model.FEASIBLE:
-        print(f'Minimal makespan: {solver.Value(makespan)}')
+        
         # 创建DataFrame
         df_gantt = pd.DataFrame(columns=["Job", "Operation", "Machine",
                                          "start_left", "start_peak", "start_right",
@@ -103,30 +106,48 @@ def solve_cp_model(num_machines, jobs_data):
                     "end_right": [end_right]
                 })
                 df_gantt = pd.concat([df_gantt, new_row], ignore_index=True)
-        
-        # print(df_gantt)
+        df_gantt['expected_start'] = df_gantt.apply(lambda row: expected_makespan(row['start_left'], row['start_peak'], row['start_right']), axis=1)
+        df_gantt['expected_end'] = df_gantt.apply(lambda row: expected_makespan(row['end_left'], row['end_peak'], row['end_right']), axis=1)
+        min_makespan = df_gantt['expected_end'].max()
+        print(f'Minimal makespan: {min_makespan}')
+        # print(max_expected_end)
     else:
         print('No solution found.')
-    return min_makespan, df_gantt
+        
+        
+    return min_makespan, df_gantt, solver.StatusName(status)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('--instance_type', type=str, default='synthetic')
+    parser.add_argument('--instance_path', type=str, default='instances/benchmarks')
     parser.add_argument('--instance', type=str, default='instances')
     parser.add_argument('--instance_nums', type=int, default=50)
     parser.add_argument('--seed', type=int, default=200)
     parser.add_argument('--n_j', type=int, default=50)
     parser.add_argument('--n_m', type=int, default=20)
+    parser.add_argument('--single_instance', type=int, default=140)
     args = parser.parse_args()
-    instance_type = args.instance_type
-    instance_url = os.path.join(args.instance, instance_type)
+    instance_path = args.instance_path
     
-    result = []
+    instance_type = 'synthetic' if 'synthetic' in instance_path else 'benchmark'
+    
     if instance_type == 'synthetic':
-       
-        instance_file = os.path.join(args.instance, 'synthetic', f"synthetic_{args.n_j}_{args.n_m}_instanceNums{args.instance_nums}_Seed{args.seed}.npy")
+        save_path = f'baseline/or-tools/or-tools-synthetic_j{args.n_j}_m{args.n_m}.csv'
+    else:
+        save_path = 'baseline/or-tools/or-tools-benchmarks.csv'
+    if os.path.exists(save_path):
+        df_results = pd.read_csv(save_path)
+    else:
+        df_results = pd.DataFrame(columns=['Instance', 'Makespan', 'all_time', 'solve_time', 'solve_status'])
+        
+    if instance_type == 'synthetic':
+        instance_file = os.path.join(args.instance_path, f"synthetic_{args.n_j}_{args.n_m}_instanceNums{args.instance_nums}_Seed{args.seed}.npy")
         instances = np.load(instance_file)
         for i, data in enumerate(instances):
+            # print(save_path)
+            if df_results['Instance'].isin([i]).any():
+                print(f"Instance {i} already solved")
+                continue
             print("solve synthetic instance {}".format(i))
             start_time = time.time()
             data = data.astype(int)
@@ -134,21 +155,25 @@ if __name__ == "__main__":
             num_machines = args.n_m
             num_jobs = args.n_j
             jobs_data = [[(machine[i][j], (left[i][j], peak[i][j], right[i][j])) for j in range(len(machine[i]))] for i in range(len(machine))]
-            makespan, resolution = solve_cp_model(num_machines, jobs_data)
+            read_time = time.time()
+            
+            makespan, resolution, solve_status = solve_cp_model(num_machines, jobs_data)
             end_time = time.time()
-            result.append([i, makespan, end_time - start_time])
-            # print(f"Instance {i} has makespan {makespan}")
-            df_results = pd.DataFrame(result, columns=['Instance', 'Makespan', 'Time']) 
+            result = [i, makespan, end_time - start_time, end_time - read_time,solve_status]
+            print(f"Instance {i} has makespan {makespan}")
+            temp_df = pd.DataFrame([result], columns=['Instance', 'Makespan', 'all_time', 'solve_time', 'solve_status'])
+            df_results = pd.concat([df_results, temp_df], ignore_index=True)
             df_results.to_csv(f'baseline/or-tools/or-tools-synthetic_j{args.n_j}_m{args.n_m}.csv', index=False)  
     else: # benchmark
-        instances_path = os.path.join(args.instance, 'benchmarks')
-        instances = os.listdir(instances_path)
-        for instance in instances:
+        print(instance_path)
+        instances = os.listdir(instance_path)
+        if args.single_instance:
+            instance = instances[args.single_instance]
             start_time = time.time()
-            instance_url = os.path.join(instances_path, instance)
-            
+            instance_path = os.path.join(instance_path, instance)
+            print(f"Processing instance {instance}")
             # 读取数据集
-            num_jobs, num_machines, processing_time = read_dataset(instance_url)
+            num_jobs, num_machines, processing_time = read_dataset(instance_path)
             
             # 处理数据集
             machine = [[item[0] for item in sublist] for sublist in processing_time]
@@ -156,17 +181,40 @@ if __name__ == "__main__":
             jobs_data = [[(machine[i][j], op[i][j]) for j in range(len(machine[i]))] for i in range(len(machine))]
             read_time = time.time()
             # 求解
-            makespan, resolution = solve_cp_model(num_machines, jobs_data)
+            makespan, resolution, solve_status = solve_cp_model(num_machines, jobs_data)
             end_time = time.time()
-            result.append([instance, makespan, end_time - start_time, end_time - read_time,])
-            # print(f"Instance {instance} has makespan {makespan}")
-            # print(makespan)
-            # if num_machines > 10:
-            #     print('[Render faild]: OUT of color bound, instance have too many jobs.')
-            #     # sys.exit(0)
-            # # 绘制甘特图
-            # draw_fuzzy_gantt_from_df(resolution, num_machines)
+            result = [instance, makespan, end_time - start_time, end_time - read_time, solve_status]
+            print(result)
+            print(f"Instance {instance} has makespan {makespan} and solve status {solve_status} in {end_time - start_time} seconds with {end_time - read_time} seconds for solving")
+        else:
+            for instance in instances:
+                if df_results['Instance'].isin([instance]).any():
+                    print(f"Instance {instance} already solved")
+                    continue
+                start_time = time.time()
+                instance_path = os.path.join(instance_path, instance)
+                print(f"Processing instance {instance}")
+                # 读取数据集
+                num_jobs, num_machines, processing_time = read_dataset(instance_path)
+                
+                # 处理数据集
+                machine = [[item[0] for item in sublist] for sublist in processing_time]
+                op = [[item[1:] for item in sublist] for sublist in processing_time]
+                jobs_data = [[(machine[i][j], op[i][j]) for j in range(len(machine[i]))] for i in range(len(machine))]
+                read_time = time.time()
+                # 求解
+                makespan, resolution, solve_status = solve_cp_model(num_machines, jobs_data)
+                end_time = time.time()
+                result = [instance, makespan, end_time - start_time, end_time - read_time, solve_status]
+                # print(f"Instance {instance} has makespan {makespan}")
+                # print(makespan)
+                # if num_machines > 10:
+                #     print('[Render faild]: OUT of color bound, instance have too many jobs.')
+                #     # sys.exit(0)
+                # # 绘制甘特图
+                # draw_fuzzy_gantt_from_df(resolution, num_machines)
 
-            
-        df_results = pd.DataFrame(result, columns=['Instance', 'Makespan', 'all_time', 'solve_time'])
-        df_results.to_csv('baseline/or-tools/or-tools-benchmarks.csv', index=False)
+                
+                temp_df = pd.DataFrame([result], columns=['Instance', 'Makespan', 'all_time', 'solve_time', 'solve_status'])
+                df_results = pd.concat([df_results, temp_df], ignore_index=True)
+                df_results.to_csv('baseline/or-tools/or-tools-benchmarks.csv', index=False)
