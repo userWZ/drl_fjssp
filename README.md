@@ -61,7 +61,7 @@ To reproduce the experiments from the paper, follow these steps:
 2. Configure the parameters in `params.py`.
 3. Run the experiment scripts by:
     ```bash
-    python train_ppo.py --config configs/train_config.yaml
+    python train_ppo.py --config 
     ```
     or:
     ```bash
