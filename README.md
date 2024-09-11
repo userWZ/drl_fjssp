@@ -59,14 +59,16 @@ To reproduce the experiments from the paper, follow these steps:
 
 1. Ensure your environment is set up as described in the [Installation](#installation) section.
 2. Configure the parameters in `params.py`.
-2. Run the experiment scripts by:
+3. Run the experiment scripts by:
     ```bash
     python train_ppo.py --config configs/train_config.yaml
     ```
-or:
-   ```bash
+    or:
+    ```bash
     bash scripts/train.bash
     ```
+
+   
 
 ## Results
 
